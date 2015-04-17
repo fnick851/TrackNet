@@ -1,0 +1,4 @@
+# Do not add data files to repository
+*visualization-data-anon-2/*
+
+web.config
