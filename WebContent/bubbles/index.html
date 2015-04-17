@@ -2,9 +2,68 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Bubbles</title>
+<title>TrackNet: Bubbles View</title>
+<script type="text/javascript" src="../lib/d3.js"></script>
+<script type="text/javascript" src="../lib/jquery-2.1.3.js"></script>
 </head>
 <body>
-
+	<script type="text/javascript">
+		var canvasWidth = 1000,
+			canvasHeight = 1000;
+		var colors = d3.scale.category10();
+		var svg = d3.select("body")
+		            .append("svg")
+		            .attr("width", canvasWidth)
+		            .attr("height", canvasHeight);
+		var cat_data;
+		d3.json("data.json", function(error, root) {
+			cat_data = root;
+			drawBubbles(svg, root);
+		});
+		
+		function bubbleAngle(R, r1, r2) {
+			var a = r1 + 5 + r2;
+			var b = R + r1;
+			var c = R + r2;
+			return Math.acos((Math.pow(b,2)+Math.pow(c,2)-Math.pow(a,2))/(2*b*c));
+		}
+		
+		function drawBubbles(svg, data) {
+			var center = [300,250]
+			var bigRadius = 100;
+			var scale = d3.scale.sqrt()
+						  .domain([data[data.length-1].size, data[0].size])
+						  .range([20, 50]);
+			
+			var angles = [0];
+			var displayable = true;
+			for (i = 1; i < data.length; i++) {
+				var angle = bubbleAngle(bigRadius, scale(data[i-1].size), scale(data[i].size));
+				var angleCC = bubbleAngle(bigRadius, scale(data[0].size), scale(data[i].size));
+				if (displayable && angle + angles[i-1] <= 2 * Math.PI - angleCC) {
+					angles.push(angle + angles[i-1]);
+				} else {
+					displayable = false;
+					angles.push(angles[angles.length-1]);
+				}
+			}
+			svg.selectAll("circle")
+			   .data(data)
+			   .enter()
+			   .append("circle")
+			   .attr("cx", function(d, i) {
+				   return center[0] + (bigRadius + scale(d.size)) * Math.cos(angles[i]);
+			   })
+			   .attr("cy", function(d, i) {
+				   return center[1] + (bigRadius + scale(d.size)) * Math.sin(angles[i]);
+			   })
+			   .attr("r", function(d) {
+				   return scale(d.size);
+			   })
+			   .attr("fill", function(d, i) {
+				   return colors(i);
+			   });
+		}
+	</script>
 </body>
 </html>
