@@ -6,6 +6,19 @@
 <script type="text/javascript" src="../lib/d3.min.js"></script>
 <script type="text/javascript" src="../lib/d3-transform.js"></script>
 <script type="text/javascript" src="../lib/jquery-2.1.3.min.js"></script>
+<style>
+text {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  pointer-events: none;
+}
+.trackerButton {
+  font-size: 12px;
+}
+.trackerButton,
+.catgoryBubble {
+  cursor: pointer;
+}
+</style>
 </head>
 <body>
 	<script type="text/javascript">
@@ -21,20 +34,19 @@
 		
 		var p1Info;
 		var bubbleData = [];
-		var bubbleCenter = [300,250];
-		var bigRadius = 100;
-		var smallRadius = 50;
-		var bubbleSizeRange = [20, 50];
+		var bubbleCenter = [300,300];
+		var bigRadius = 120;
+		var smallRadius = 60;
+		var bubbleSizeRange = [20, 60];
 		var bubbleScale;
 		var shrinkRadius = 20;
-		var rightMostAngleRel = 0;
-		var rightMostAngleAbs = 0;
+		var rightMostAngle = 0;
 		
 		var boxTopLeft = [600,60];
 		var boxDimentions = [250,420];
-		var boxVisibleCapacity = 10;
+		var boxVisibleCapacity = 16;
+		var trackerButtonHeight = 20;
 		
-		//d3.json("data.json", function(error, root) {
 		d3.json("data/851.adjacency.json", function(error, root) {
 			completeData = root;
 			p1Info = root.firstPartyDomains[1004];
@@ -99,10 +111,18 @@
 			return Math.acos((Math.pow(b,2)+Math.pow(c,2)-Math.pow(a,2))/(2*b*c));
 		}
 		
+		function bubbleX(data) {
+			return bubbleCenter[0] + (data.R + data.r) * Math.cos(data.angle);
+		}
+		
+		function bubbleY(data) {
+			return bubbleCenter[1] + (data.R + data.r) * Math.sin(data.angle);
+		}
+		
 		function shrinkTransition(token, data) {
 			token.transition()
-				 .attr("cx", bubbleCenter[0] + (data.R + data.r) * Math.cos(data.angle))
-				 .attr("cy", bubbleCenter[1] + (data.R + data.r) * Math.sin(data.angle))
+				 .attr("cx", bubbleX(data))
+				 .attr("cy", bubbleY(data))
 				 .attr("r", data.r)
 				 .each("end", function() {
 					 reDrawBubbles();
@@ -111,20 +131,52 @@
 		
 		function reDrawBubbles() {
 			computeBubblePositions();
-			svg.selectAll(".catgoryBubble")
+			var circles = svg.selectAll(".catgoryBubble")
 			   .data(bubbleData)
 			   .select("circle")
 			   .transition()
-			   .attr("cx", function(d, i) {
-				   d.angle = d.angle - rightMostAngleAbs
-				   return bubbleCenter[0] + (d.R + d.r) * Math.cos(d.angle);
+			   .attr("cx", function(d) {
+				   d.angle = d.angle - rightMostAngle
+				   return bubbleX(d);
 			   })
-			   .attr("cy", function(d, i) {
-				   return bubbleCenter[1] + (d.R + d.r) * Math.sin(d.angle);
+			   .attr("cy", function(d) {
+				   return bubbleY(d);
 			   })
 			   .attr("r", function(d) {
 				   return d.r;
 			   });
+			svg.selectAll(".catgoryBubble")
+			   .select("#bubbleText1")
+			   .transition()
+			   .attr("x", function(d) {
+				   return bubbleX(d);
+			   })
+			   .attr("y", function(d) {
+				   return bubbleY(d) - d.r * 0.1;
+			   })
+			   .attr("font-size", function(d) {
+				   return d.r * 0.23;
+			   })
+			   .attr("visibility", function(d) {
+				   return d.shrink ? "hidden" : null;
+			   });
+			svg.selectAll(".catgoryBubble")
+			   .select("#bubbleText2")
+			   .transition()
+			   .attr("x", function(d) {
+				   return bubbleX(d);
+			   })
+			   .attr("y", function(d) {
+				   return bubbleY(d) + d.r * 0.3;
+			   })
+			   .attr("font-size", function(d) {
+				   return d.r * 0.26;
+			   })
+			   .attr("visibility", function(d) {
+				   return d.shrink ? "hidden" : null;
+			   });
+			
+			return circles;
 		}
 		
 		function drawTriangle(offset, rotate, index, visibility) {
@@ -143,7 +195,7 @@
 					 .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
 					 .attr("fill", colors(index))
 					 .attr("visibility", visibility)
-					 .attr('transform', transform)
+					 .attr("transform", transform)
 					 .on("mouseover", function() {
 						 d3.select(this).attr("opacity", 0.2);
 					 })
@@ -152,101 +204,212 @@
 					 });
 		}
 		
+		function drawCloseButton(x, y, r) {
+			var rc = r/2;
+			var closeButton = svg.append("g")
+								 .attr("id", "closeButton")
+								 .style("pointer-events", "none");
+			closeButton.append("circle")
+					   .attr("cx", x)
+					   .attr("cy", y)
+					   .attr("r", r)
+					   .attr("fill", "white")
+					   .attr("opacity", 0.7);
+			closeButton.append("line")
+					   .attr("x1", x-rc)
+					   .attr("y1", y-rc)
+					   .attr("x2", x+rc)
+					   .attr("y2", y+rc)
+					   .attr("stroke", "black")
+					   .attr("stroke-width", rc/3);
+			closeButton.append("line")
+					   .attr("x1", x+rc)
+					   .attr("y1", y-rc)
+					   .attr("x2", x-rc)
+					   .attr("y2", y+rc)
+					   .attr("stroke", "black")
+					   .attr("stroke-width", rc/3);
+		}
+		
+		function drawCategoryTooltip(data) {
+			var categoryTooltip = svg.append("g")
+									 .attr("id", "categoryTooltip");
+			categoryTooltip.append("rect")
+						   .attr("x", boxTopLeft[0])
+						   .attr("y", boxTopLeft[1])
+						   .attr("width", boxDimentions[0])
+						   .attr("height", boxDimentions[1])
+						   .attr("fill", "white")
+						   .attr("stroke", "white");
+			drawTrackersList(categoryTooltip, data);
+		}
+		
+		function drawTrackersBox(data) {
+			var trackersBox = svg.append("g")
+								 .attr("id", "trackersBox");
+			trackersBox.append("rect")
+					   .attr("x", boxTopLeft[0])
+					   .attr("y", boxTopLeft[1])
+					   .attr("rx", 40)
+					   .attr("ry", 40)
+					   .attr("width", boxDimentions[0])
+					   .attr("height", boxDimentions[1])
+					   .attr("fill", "none")
+					   .attr("stroke", colors(data.index));
+
+			var navOffset = 10;
+			var triLeft = drawTriangle([boxTopLeft[0]+45,boxTopLeft[1]+navOffset], 90, data.index, null);
+			triLeft.on("click", function() {
+				d3.select("#trackersBox").remove();
+			});
+			drawTriangle([boxTopLeft[0]+115,boxTopLeft[1]+navOffset], 0, data.index, "hidden");
+			drawTriangle([boxTopLeft[0]+185,boxTopLeft[1]+navOffset], 270, data.index, null);
+			
+			var trackerButtons = drawTrackersList(trackersBox, data);
+			var dim = trackerButtonHeight * 0.5;
+			trackerButtons.append("polygon")
+						  .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
+						  .attr("fill", colors(data.index))
+						  .attr("transform", function(d, i) {
+							  return "translate("+(boxTopLeft[0]+boxDimentions[0]*0.86)+","
+									  +(boxTopLeft[1]+85+trackerButtonHeight*i)+") rotate(270)";
+						  })
+						  .style("pointer-events", "none")
+						  .attr("opacity", 0.8);
+			trackerButtons.on("mouseover", function() {
+							   d3.select(this).select("rect")
+							     .attr("fill", colors(data.index));
+							   d3.select(this).select("text")
+							     .attr("font-weight", "bold");
+							   d3.select("body")
+							     .attr("cursor", "hand");
+						   })
+						   .on("mouseout", function() {
+							   d3.select(this).select("rect")
+							     .attr("fill", "white");
+							   d3.select(this).select("text")
+							     .attr("font-weight", null);
+							   d3.select("body")
+							     .attr("cursor", null);
+						   })
+						   .on("click", function(data) {
+							   console.log(data)
+						   });
+		}
+		
 		function drawTrackersList(token, data) {
 			token.append("text")
 				 .attr("x", boxTopLeft[0]+boxDimentions[0]/2)
-				 .attr("y", boxTopLeft[1]+50)
+				 .attr("y", boxTopLeft[1]+55)
 				 .attr("fill", colors(data.index))
 				 .style("text-anchor", "middle")
 				 .text(data.category);
 			
-			var boxData = [""];
+			var boxData = [];
 			for (var i = 0; i < boxVisibleCapacity && i < p1Info[data.id].length; i++) {
-				boxData.push(completeData.domainList[p1Info[data.id][i]]);
+				var trackerId = p1Info[data.id][i];
+				boxData.push({"id":trackerId,"domain":completeData.domainList[trackerId]});
 			}
 			
-			console.log(boxData);
-			token.selectAll("text")
-				 .data(boxData)
-				 .enter()
-				 .append("text")
-				 .attr("x", boxTopLeft[0]+20)
-				 .attr("y", function(d, i) {
-					 return boxTopLeft[1]+60+30*i;
-				 })
-				 .text(function(d) {
-					 return d;
-				 });
+			var trackerButtons = token.selectAll("g")
+									  .data(boxData)
+									  .enter()
+									  .append("g")
+									  .attr("class", "trackerButton");
+			trackerButtons.append("rect")
+						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.05)
+						  .attr("y", function(d, i) {
+							  return boxTopLeft[1]+70+trackerButtonHeight*i;
+						  })
+						  .attr("rx", 5)
+						  .attr("ry", 5)
+						  .attr("width", boxDimentions[0] * 0.9)
+						  .attr("height", trackerButtonHeight)
+						  .attr("fill", "white")
+						  .attr("stroke", colors(data.index))
+						  .attr("opacity", 0.15);
+			trackerButtons.append("text")
+						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.1)
+						  .attr("y", function(d, i) {
+							  return boxTopLeft[1]+85+trackerButtonHeight*i;
+						  })
+						  .text(function(d) {
+							  return d.domain;
+						  });
+			
+			return trackerButtons;
+		}
+		
+		function initializeBubbleText() {
+			svg.selectAll(".catgoryBubble")
+			   .append("text")
+			   .attr("x", function(d) {
+				   return bubbleX(d);
+			   })
+			   .attr("y", function(d) {
+				   return bubbleY(d) - d.r * 0.1;
+			   })
+			   .attr("fill", "white")
+			   .attr("font-size", function(d) {
+				   return d.r * 0.23;
+			   })
+			   .attr("class", "bubbleText")
+			   .attr("id", "bubbleText1")
+			   .style("text-anchor", "middle")
+			   .text(function(d) {
+				   return d.category.substr(0,15);
+			   });
+			svg.selectAll(".catgoryBubble")
+			   .append("text")
+			   .attr("x", function(d) {
+				   return bubbleX(d);
+			   })
+			   .attr("y", function(d) {
+				   return bubbleY(d) + d.r * 0.3;
+			   })
+			   .attr("fill", "white")
+			   .attr("font-size", function(d) {
+				   return d.r * 0.26;
+			   })
+			   .attr("class", "bubbleText")
+			   .attr("id", "bubbleText2")
+			   .style("text-anchor", "middle")
+			   .text(function(d) {
+				   return d.size;
+			   });
 		}
 		
 		function drawGraph() {
+			// Draw the central bubble
+			svg.append("circle")
+			   .attr("cx", bubbleCenter[0])
+			   .attr("cy", bubbleCenter[1])
+			   .attr("r", 20)
+			   .attr("fill", "gray");
+			// Bubble events
 			computeBubblePositions();
-			svg.selectAll("circle")
+			svg.selectAll("g")
 			   .data(bubbleData)
 			   .enter()
 			   .append("g")
 			   .attr("class", "catgoryBubble")
-			   .append("circle")
-			   .attr("cx", function(d, i) {
-				   return bubbleCenter[0] + (d.R + d.r) * Math.cos(d.angle);
-			   })
-			   .attr("cy", function(d, i) {
-				   return bubbleCenter[1] + (d.R + d.r) * Math.sin(d.angle);
-			   })
-			   .attr("r", function(d) {
-				   return d.r;
-			   })
-			   .attr("fill", function(d, i) {
-				   return colors(i);
-			   })
-			   .attr("opacity", 0.7)
 			   .on("click", function(data) {
+				   var circle = d3.select(this).select("circle");
 				   if (data.shrink != true) {
-					   if (d3.mouse(this)[1] > d3.select(this).attr("cy")-d3.select(this).attr("r")/2) {
+					   if (d3.mouse(this)[1] > circle.attr("cy")-circle.attr("r")/2) {
 						   // Move a bubble to the right-most position.
-						   rightMostAngleRel = data.angle;
-						   rightMostAngleAbs += data.angle;
+						   rightMostAngle += data.angle;
 						   var toRightCount = 0;
-						   svg.selectAll(".catgoryBubble")
-						      .select("circle")
-						      .transition()
-						      .attr("cx", function(d, i) {
-						    	  d.angle = d.angle - rightMostAngleRel;
-						    	  return bubbleCenter[0] + (d.R + d.r) * Math.cos(d.angle);
-						      })
-						      .attr("cy", function(d, i) {
-						    	  return bubbleCenter[1] + (d.R + d.r) * Math.sin(d.angle);
-						      })
-						      .each("start", function() {
-						    	  toRightCount++;
-						      })
-						      .each("end", function() {
-						    	  // Show the trackers' box.
-						    	  if ( --toRightCount != 0 )
-						    		  return;
-						    	  var trackersBox = svg.append("g")
-						    	  					   .attr("id", "trackersBox");
-						    	  
-						    	  trackersBox.append("rect")
-						    	  			 .attr("x", boxTopLeft[0])
-						    	  			 .attr("y", boxTopLeft[1])
-						    	  			 .attr("rx", 40)
-						    	  			 .attr("ry", 40)
-						    	  			 .attr("width", boxDimentions[0])
-						    	  			 .attr("height", boxDimentions[1])
-						    	  			 .attr("fill", "none")
-						    	  			 .attr("stroke", colors(data.index));
-						    	  
-						    	  var navOffset = 10;
-						    	  var triLeft = drawTriangle([boxTopLeft[0]+45,boxTopLeft[1]+navOffset], 90, data.index, null);
-						    	  triLeft.on("click", function() {
-						    		  d3.select("#trackersBox").remove();
-						    	  });
-						    	  drawTriangle([boxTopLeft[0]+115,boxTopLeft[1]+navOffset], 0, data.index, "hidden");
-						    	  drawTriangle([boxTopLeft[0]+185,boxTopLeft[1]+navOffset], 270, data.index, null);
-						    	  
-						    	  drawTrackersList(trackersBox, data)
-						      });
+						   var circles = reDrawBubbles();
+						   circles.each("start", function() {
+							   toRightCount++;
+						   })
+						   .each("end", function() {
+							   if ( --toRightCount != 0 )
+								   return;
+							   // Show the trackers' box.
+							   drawTrackersBox(data);
+						   });
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
@@ -255,7 +418,8 @@
 						   data.shrink = bubbleData[data.index].shrink = true;
 						   data.R = smallRadius;
 						   data.r = shrinkRadius;
-						   shrinkTransition(d3.select(this), data);
+						   shrinkTransition(circle, data);
+						   d3.select(this).selectAll(".bubbleText").attr("visibility", "hidden");
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
@@ -265,38 +429,43 @@
 					   data.shrink = bubbleData[data.index].shrink = false;
 					   data.R = bigRadius;
 					   data.r = data.r;
-					   shrinkTransition(d3.select(this), data);
+					   shrinkTransition(circle, data);
 					   d3.select("#trackersBox").remove();
 				   }
 			   })
 			   .on("mouseover", function(data) {
+				   var circle = d3.select(this).select("circle");
 				   if (data.shrink != true) {
 					   // Display a close button
-					   svg.append("circle")
-					      .attr("cx", d3.select(this).attr("cx"))
-					      .attr("cy", d3.select(this).attr("cy")-d3.select(this).attr("r")*3/4)
-					      .attr("r", d3.select(this).attr("r")/4)
-					      .attr("fill", "white")
-					      .attr("opacity", 0.7)
-					      .attr("id", "closeButton")
-					      .style("pointer-events", "none");
-					   // Display a tooltip
-					   categoryTooltip = svg.append("g")
-					   						.attr("id", "categoryTooltip");
-					   categoryTooltip.append("rect")
-					   				  .attr("x", boxTopLeft[0])
-					   				  .attr("y", boxTopLeft[1])
-					   				  .attr("width", boxDimentions[0])
-					   				  .attr("height", boxDimentions[1])
-					   				  .attr("fill", "white")
-					   				  .attr("stroke", "white");
-					   drawTrackersList(categoryTooltip, data);
+					   var x = Number(circle.attr("cx"));
+					   var y = circle.attr("cy")-circle.attr("r")*3/4;
+					   var r = circle.attr("r")/4;
+					   drawCloseButton(x, y, r);
 				   }
+				   // Display a tooltip
+				   drawCategoryTooltip(data);
 			   })
 			   .on("mouseout", function() {
 				   d3.select("#closeButton").remove();
 				   d3.select("#categoryTooltip").remove();
 			   });
+			// Initial the bubbles
+			svg.selectAll(".catgoryBubble")
+			   .append("circle")
+			   .attr("cx", function(d) {
+				   return bubbleX(d);
+			   })
+			   .attr("cy", function(d) {
+				   return bubbleY(d);
+			   })
+			   .attr("r", function(d) {
+				   return d.r;
+			   })
+			   .attr("fill", function(d, i) {
+				   return colors(i);
+			   })
+			   .attr("opacity", 0.9);
+			initializeBubbleText();
 		}
 	</script>
 </body>
