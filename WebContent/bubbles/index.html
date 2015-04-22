@@ -11,7 +11,8 @@ text {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   pointer-events: none;
 }
-.trackerButton {
+.trackerButton,
+.p1Item {
   font-size: 12px;
 }
 .trackerButton,
@@ -22,13 +23,11 @@ text {
 </head>
 <body>
 	<script type="text/javascript">
-		var canvasWidth = 1000,
-			canvasHeight = 1000;
 		var colors = d3.scale.category10();
 		var svg = d3.select("body")
 		            .append("svg")
-		            .attr("width", canvasWidth)
-		            .attr("height", canvasHeight);
+		            .attr("width", 1500)
+		            .attr("height", 1000);
 		
 		var completeData;
 		
@@ -45,7 +44,11 @@ text {
 		var boxTopLeft = [600,60];
 		var boxDimentions = [250,420];
 		var boxVisibleCapacity = 16;
-		var trackerButtonHeight = 20;
+		var trackerItemHeight = 20;
+		
+		var p1ListTopLeft = [900,60];
+		var p1ListItemDimentions = [200,20];
+		var p1ListVisibleCapacity = 16;
 		
 		d3.json("data/851.adjacency.json", function(error, root) {
 			completeData = root;
@@ -112,11 +115,11 @@ text {
 		}
 		
 		function bubbleX(data) {
-			return bubbleCenter[0] + (data.R + data.r) * Math.cos(data.angle);
+			return bubbleCenter[0] + (data.R + data.r) * Math.cos(data.angle-rightMostAngle);
 		}
 		
 		function bubbleY(data) {
-			return bubbleCenter[1] + (data.R + data.r) * Math.sin(data.angle);
+			return bubbleCenter[1] + (data.R + data.r) * Math.sin(data.angle-rightMostAngle);
 		}
 		
 		function shrinkTransition(token, data) {
@@ -131,52 +134,10 @@ text {
 		
 		function reDrawBubbles() {
 			computeBubblePositions();
-			var circles = svg.selectAll(".catgoryBubble")
-			   .data(bubbleData)
-			   .select("circle")
-			   .transition()
-			   .attr("cx", function(d) {
-				   d.angle = d.angle - rightMostAngle
-				   return bubbleX(d);
-			   })
-			   .attr("cy", function(d) {
-				   return bubbleY(d);
-			   })
-			   .attr("r", function(d) {
-				   return d.r;
-			   });
 			svg.selectAll(".catgoryBubble")
-			   .select("#bubbleText1")
-			   .transition()
-			   .attr("x", function(d) {
-				   return bubbleX(d);
-			   })
-			   .attr("y", function(d) {
-				   return bubbleY(d) - d.r * 0.1;
-			   })
-			   .attr("font-size", function(d) {
-				   return d.r * 0.23;
-			   })
-			   .attr("visibility", function(d) {
-				   return d.shrink ? "hidden" : null;
-			   });
-			svg.selectAll(".catgoryBubble")
-			   .select("#bubbleText2")
-			   .transition()
-			   .attr("x", function(d) {
-				   return bubbleX(d);
-			   })
-			   .attr("y", function(d) {
-				   return bubbleY(d) + d.r * 0.3;
-			   })
-			   .attr("font-size", function(d) {
-				   return d.r * 0.26;
-			   })
-			   .attr("visibility", function(d) {
-				   return d.shrink ? "hidden" : null;
-			   });
-			
-			return circles;
+			   .data(bubbleData);
+			drawBubbleText();
+			return drawBubbles();
 		}
 		
 		function drawTriangle(offset, rotate, index, visibility) {
@@ -261,18 +222,19 @@ text {
 			var triLeft = drawTriangle([boxTopLeft[0]+45,boxTopLeft[1]+navOffset], 90, data.index, null);
 			triLeft.on("click", function() {
 				d3.select("#trackersBox").remove();
+				d3.select("#p1List").remove();
 			});
 			drawTriangle([boxTopLeft[0]+115,boxTopLeft[1]+navOffset], 0, data.index, "hidden");
 			drawTriangle([boxTopLeft[0]+185,boxTopLeft[1]+navOffset], 270, data.index, null);
 			
 			var trackerButtons = drawTrackersList(trackersBox, data);
-			var dim = trackerButtonHeight * 0.5;
+			var dim = trackerItemHeight * 0.5;
 			trackerButtons.append("polygon")
 						  .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
 						  .attr("fill", colors(data.index))
 						  .attr("transform", function(d, i) {
 							  return "translate("+(boxTopLeft[0]+boxDimentions[0]*0.86)+","
-									  +(boxTopLeft[1]+85+trackerButtonHeight*i)+") rotate(270)";
+									  +(boxTopLeft[1]+85+trackerItemHeight*i)+") rotate(270)";
 						  })
 						  .style("pointer-events", "none")
 						  .attr("opacity", 0.8);
@@ -281,19 +243,25 @@ text {
 							     .attr("fill", colors(data.index));
 							   d3.select(this).select("text")
 							     .attr("font-weight", "bold");
-							   d3.select("body")
-							     .attr("cursor", "hand");
 						   })
 						   .on("mouseout", function() {
-							   d3.select(this).select("rect")
-							     .attr("fill", "white");
-							   d3.select(this).select("text")
-							     .attr("font-weight", null);
-							   d3.select("body")
-							     .attr("cursor", null);
+							   if (d3.select(this).attr("status") != "on") {
+								   d3.select(this).select("rect")
+								     .attr("fill", "white");
+								   d3.select(this).select("text")
+								     .attr("font-weight", null);
+							   }
 						   })
 						   .on("click", function(data) {
-							   console.log(data)
+							   svg.selectAll(".trackerButton[status=on] rect")
+							      .attr("fill", "white");
+							   svg.selectAll(".trackerButton[status=on] text")
+							      .attr("font-weight", null);
+							   svg.selectAll(".trackerButton[status=on]")
+							      .attr("status", null);
+							   d3.select(this).attr("status", "on");
+							   d3.select("#p1List").remove();
+							   drawP1List(data);
 						   });
 		}
 		
@@ -319,63 +287,129 @@ text {
 			trackerButtons.append("rect")
 						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.05)
 						  .attr("y", function(d, i) {
-							  return boxTopLeft[1]+70+trackerButtonHeight*i;
+							  return boxTopLeft[1]+70+trackerItemHeight*i;
 						  })
 						  .attr("rx", 5)
 						  .attr("ry", 5)
 						  .attr("width", boxDimentions[0] * 0.9)
-						  .attr("height", trackerButtonHeight)
+						  .attr("height", trackerItemHeight)
 						  .attr("fill", "white")
 						  .attr("stroke", colors(data.index))
 						  .attr("opacity", 0.15);
 			trackerButtons.append("text")
 						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.1)
 						  .attr("y", function(d, i) {
-							  return boxTopLeft[1]+85+trackerButtonHeight*i;
+							  return boxTopLeft[1]+85+trackerItemHeight*i;
 						  })
 						  .text(function(d) {
 							  return d.domain;
+						  });
+			trackerButtons.append("text")
+						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.83)
+						  .attr("y", function(d, i) {
+							  return boxTopLeft[1]+85+trackerItemHeight*i;
+						  })
+						  .style("text-anchor", "end")
+						  .text(function(d) {
+							  return "["+completeData.thirdPartyDomains[d.id].domainList.length+"]";
 						  });
 			
 			return trackerButtons;
 		}
 		
-		function initializeBubbleText() {
+		function drawP1List(data) {
+			var p1List = svg.append("g")
+							.attr("id", "p1List");
+			p1List.append("text")
+				  .attr("x", p1ListTopLeft[0]+p1ListItemDimentions[0]/2)
+				  .attr("y", p1ListTopLeft[1]+55)
+				  .attr("fill", "gray")
+				  .style("text-anchor", "middle")
+				  .text("First-party Domains");
+			
+			var p1ListData = [];
+			var list = completeData.thirdPartyDomains[data.id].domainList;
+			for (var i = 0; i < p1ListVisibleCapacity && i < list.length; i++) {
+				var p1Id = list[i];
+				p1ListData.push({"id":p1Id,"domain":completeData.domainList[p1Id]});
+			}
+			var p1Items = p1List.selectAll("g")
+								.data(p1ListData)
+								.enter()
+								.append("g")
+								.attr("class", "p1Item");
+			p1Items.append("rect")
+				   .attr("x", p1ListTopLeft[0])
+				   .attr("y", function(d, i) {
+					   return p1ListTopLeft[1]+70+p1ListItemDimentions[1]*i;
+				   })
+				   .attr("rx", 5)
+				   .attr("ry", 5)
+				   .attr("width", p1ListItemDimentions[0])
+				   .attr("height", p1ListItemDimentions[1])
+				   .attr("fill", "gray")
+				   .attr("opacity", 0.15);
+			p1Items.append("text")
+				   .attr("x", p1ListTopLeft[0] + p1ListItemDimentions[0] * 0.1)
+				   .attr("y", function(d, i) {
+					   return p1ListTopLeft[1]+85+p1ListItemDimentions[1]*i;
+				   })
+				   .text(function(d) {
+					   return d.domain;
+				   });
+		}
+		
+		function drawBubbles() {
+			return svg.selectAll(".catgoryBubble")
+				      .select("circle")
+				      .transition()
+				      .attr("cx", function(d) {
+					      return bubbleX(d);
+				      })
+				      .attr("cy", function(d) {
+					      return bubbleY(d);
+				      })
+				      .attr("r", function(d) {
+					      return d.r;
+				      });
+		}
+		
+		function drawBubbleText() {
 			svg.selectAll(".catgoryBubble")
-			   .append("text")
+			   .select("#bubbleText1")
+			   .transition()
 			   .attr("x", function(d) {
 				   return bubbleX(d);
 			   })
 			   .attr("y", function(d) {
 				   return bubbleY(d) - d.r * 0.1;
 			   })
-			   .attr("fill", "white")
 			   .attr("font-size", function(d) {
 				   return d.r * 0.23;
 			   })
-			   .attr("class", "bubbleText")
-			   .attr("id", "bubbleText1")
-			   .style("text-anchor", "middle")
 			   .text(function(d) {
 				   return d.category.substr(0,15);
+			   })
+			   .attr("visibility", function(d) {
+				   return d.shrink ? "hidden" : null;
 			   });
 			svg.selectAll(".catgoryBubble")
-			   .append("text")
+			   .select("#bubbleText2")
+			   .transition()
 			   .attr("x", function(d) {
 				   return bubbleX(d);
 			   })
 			   .attr("y", function(d) {
 				   return bubbleY(d) + d.r * 0.3;
 			   })
-			   .attr("fill", "white")
 			   .attr("font-size", function(d) {
 				   return d.r * 0.26;
 			   })
-			   .attr("class", "bubbleText")
-			   .attr("id", "bubbleText2")
-			   .style("text-anchor", "middle")
 			   .text(function(d) {
 				   return d.size;
+			   })
+			   .attr("visibility", function(d) {
+				   return d.shrink ? "hidden" : null;
 			   });
 		}
 		
@@ -398,7 +432,7 @@ text {
 				   if (data.shrink != true) {
 					   if (d3.mouse(this)[1] > circle.attr("cy")-circle.attr("r")/2) {
 						   // Move a bubble to the right-most position.
-						   rightMostAngle += data.angle;
+						   rightMostAngle = data.angle;
 						   var toRightCount = 0;
 						   var circles = reDrawBubbles();
 						   circles.each("start", function() {
@@ -413,6 +447,7 @@ text {
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
+						   d3.select("#p1List").remove();
 					   } else {
 						   // Shrink a bubble
 						   data.shrink = bubbleData[data.index].shrink = true;
@@ -423,6 +458,7 @@ text {
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
+						   d3.select("#p1List").remove();
 					   }
 				   } else {
 					   // Expand a bubble
@@ -431,6 +467,7 @@ text {
 					   data.r = data.r;
 					   shrinkTransition(circle, data);
 					   d3.select("#trackersBox").remove();
+					   d3.select("#p1List").remove();
 				   }
 			   })
 			   .on("mouseover", function(data) {
@@ -452,20 +489,24 @@ text {
 			// Initial the bubbles
 			svg.selectAll(".catgoryBubble")
 			   .append("circle")
-			   .attr("cx", function(d) {
-				   return bubbleX(d);
-			   })
-			   .attr("cy", function(d) {
-				   return bubbleY(d);
-			   })
-			   .attr("r", function(d) {
-				   return d.r;
-			   })
 			   .attr("fill", function(d, i) {
 				   return colors(i);
 			   })
 			   .attr("opacity", 0.9);
-			initializeBubbleText();
+			drawBubbles()
+			svg.selectAll(".catgoryBubble")
+			   .append("text")
+			   .attr("fill", "white")
+			   .attr("class", "bubbleText")
+			   .attr("id", "bubbleText1")
+			   .style("text-anchor", "middle");
+			svg.selectAll(".catgoryBubble")
+			   .append("text")
+			   .attr("fill", "white")
+			   .attr("class", "bubbleText")
+			   .attr("id", "bubbleText2")
+			   .style("text-anchor", "middle");
+			drawBubbleText();
 		}
 	</script>
 </body>
