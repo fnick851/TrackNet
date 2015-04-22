@@ -200,6 +200,7 @@ text {
 		
 		function drawTrackersBox(data) {
 			var trackerButtons = drawTrackersList("trackersBox", data);
+
 			var dim = trackerItemHeight * 0.5;
 			trackerButtons.append("polygon")
 						  .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
