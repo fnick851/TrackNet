@@ -93,6 +93,8 @@ text {
 					bubbleData[i].r = shrinkRadius;
 					smallBubbleIdx = computeAngle(i, smallBubbleIdx[0], smallBubbleIdx[1]);
 				}
+				bubbleData[i].x = bubbleX(bubbleData[i]);
+				bubbleData[i].y = bubbleY(bubbleData[i]);
 			}
 		}
 		
@@ -142,7 +144,6 @@ text {
 			computeBubblePositions();
 			svg.selectAll(".catgoryBubble")
 			   .data(bubbleData);
-			drawBubbleText();
 			return drawBubbles();
 		}
 		
@@ -210,7 +211,10 @@ text {
 									  +(boxTopLeft[1]+85+trackerItemHeight*i)+") rotate(270)";
 						  })
 						  .style("pointer-events", "none")
-						  .attr("opacity", 0.8);
+						  .attr("opacity", 0.8)
+						  .attr("visibility", function(d) {
+							  return d.p1Length == 0 ? "hidden" : null;
+						  });
 			trackerButtons.on("mouseover", function() {
 							   d3.select(this).select("rect")
 							     .attr("fill", colors(data.index));
@@ -226,15 +230,17 @@ text {
 							   }
 						   })
 						   .on("click", function(data) {
-							   svg.selectAll(".trackerButton[status=on] rect")
-							      .attr("fill", "white");
-							   svg.selectAll(".trackerButton[status=on] text")
-							      .attr("font-weight", null);
-							   svg.selectAll(".trackerButton[status=on]")
-							      .attr("status", null);
-							   d3.select(this).attr("status", "on");
-							   d3.select("#p1List").remove();
-							   drawP1List(data);
+							   if (data.p1Length > 0) {
+								   svg.selectAll(".trackerButton[status=on] rect")
+								      .attr("fill", "white");
+								   svg.selectAll(".trackerButton[status=on] text")
+								      .attr("font-weight", null);
+								   svg.selectAll(".trackerButton[status=on]")
+								      .attr("status", null);
+								   d3.select(this).attr("status", "on");
+								   d3.select("#p1List").remove();
+								   drawP1List(data);
+							   }
 						   });
 			
 			var navOffset = 10;
@@ -270,7 +276,9 @@ text {
 			var boxData = [];
 			for (var i = 0; i < boxVisibleCapacity && i < p1Info[data.id].length; i++) {
 				var trackerId = p1Info[data.id][i];
-				boxData.push({"id":trackerId,"domain":completeData.domainList[trackerId]});
+				boxData.push({"id":trackerId,
+							  "domain":completeData.domainList[trackerId],
+							  "p1Length":completeData.thirdPartyDomains[trackerId].domainList.length-1});
 			}
 			
 			var trackerButtons = token.selectAll("g")
@@ -305,7 +313,7 @@ text {
 						  })
 						  .style("text-anchor", "end")
 						  .text(function(d) {
-							  return "["+(completeData.thirdPartyDomains[d.id].domainList.length-1)+"]";
+							  return "["+d.p1Length+"]";
 						  });
 			
 			return trackerButtons;
@@ -356,29 +364,14 @@ text {
 		}
 		
 		function drawBubbles() {
-			return svg.selectAll(".catgoryBubble")
-				      .select("circle")
-				      .transition()
-				      .attr("cx", function(d) {
-					      return bubbleX(d);
-				      })
-				      .attr("cy", function(d) {
-					      return bubbleY(d);
-				      })
-				      .attr("r", function(d) {
-					      return d.r;
-				      });
-		}
-		
-		function drawBubbleText() {
 			svg.selectAll(".catgoryBubble")
 			   .select("#bubbleText1")
 			   .transition()
 			   .attr("x", function(d) {
-				   return bubbleX(d);
+				   return d.x;
 			   })
 			   .attr("y", function(d) {
-				   return bubbleY(d) - d.r * 0.1;
+				   return d.y - d.r * 0.1;
 			   })
 			   .attr("font-size", function(d) {
 				   return d.r * 0.23;
@@ -387,16 +380,16 @@ text {
 				   return d.category.substr(0,15);
 			   })
 			   .attr("visibility", function(d) {
-				   return d.shrink ? "hidden" : null;
+				   return !d.shrink || d.showText ? null : "hidden";
 			   });
 			svg.selectAll(".catgoryBubble")
 			   .select("#bubbleText2")
 			   .transition()
 			   .attr("x", function(d) {
-				   return bubbleX(d);
+				   return d.x;
 			   })
 			   .attr("y", function(d) {
-				   return bubbleY(d) + d.r * 0.3;
+				   return d.y + d.r * 0.3;
 			   })
 			   .attr("font-size", function(d) {
 				   return d.r * 0.26;
@@ -405,8 +398,20 @@ text {
 				   return d.size;
 			   })
 			   .attr("visibility", function(d) {
-				   return d.shrink ? "hidden" : null;
+				   return !d.shrink || d.showText ? null : "hidden";
 			   });
+			return svg.selectAll(".catgoryBubble")
+				      .select("circle")
+				      .transition()
+				      .attr("cx", function(d) {
+					      return d.x;
+				      })
+				      .attr("cy", function(d) {
+					      return d.y;
+				      })
+				      .attr("r", function(d) {
+					      return d.r;
+				      });
 		}
 		
 		function drawGraph() {
@@ -415,7 +420,9 @@ text {
 			   .attr("cx", bubbleCenter[0])
 			   .attr("cy", bubbleCenter[1])
 			   .attr("r", 20)
-			   .attr("fill", "gray");
+			   .attr("fill", "gray")
+			   .append("title")
+			   .text(completeData.domainList[domainId]);
 			// Bubble events
 			computeBubblePositions();
 			svg.selectAll("g")
@@ -450,7 +457,6 @@ text {
 						   data.R = smallRadius;
 						   data.r = shrinkRadius;
 						   shrinkTransition(circle, data);
-						   d3.select(this).selectAll(".bubbleText").attr("visibility", "hidden");
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
@@ -467,18 +473,32 @@ text {
 				   }
 			   })
 			   .on("mouseover", function(data) {
-				   var circle = d3.select(this).select("circle");
-				   if (data.shrink != true) {
+				   data.showText = true;
+				   // Enlarge the bubble
+				   data.r = bubbleSizeRange[1];
+				   data.x = bubbleX(data);
+				   data.y = bubbleY(data);
+				   var enlargeCount = 0;
+				   var circles = drawBubbles();
+				   circles.each("start", function() {
+					   enlargeCount++;
+				   })
+				   .each("end", function() {
+					   if ( --enlargeCount != 0 )
+						   return;
 					   // Display a close button
-					   var x = Number(circle.attr("cx"));
-					   var y = circle.attr("cy")-circle.attr("r")*3/4;
-					   var r = circle.attr("r")/4;
-					   drawCloseButton(x, y, r);
-				   }
+					   if (data.shrink != true) {
+						   var y = data.y-data.r*3/4;
+						   var r = data.r/4;
+						   drawCloseButton(data.x, y, r);
+					   }
+				   });
 				   // Display a tooltip
 				   drawTrackersList("categoryTooltip", data);
 			   })
-			   .on("mouseout", function() {
+			   .on("mouseout", function(data) {
+				   data.showText = false;
+				   reDrawBubbles();
 				   d3.select("#closeButton").remove();
 				   d3.select("#categoryTooltip").remove();
 			   });
@@ -488,8 +508,8 @@ text {
 			   .attr("fill", function(d, i) {
 				   return colors(i);
 			   })
-			   .attr("opacity", 0.9);
-			drawBubbles()
+			   .attr("opacity", 0.8);
+			
 			svg.selectAll(".catgoryBubble")
 			   .append("text")
 			   .attr("class", "bubbleText")
@@ -498,7 +518,7 @@ text {
 			   .append("text")
 			   .attr("class", "bubbleText")
 			   .attr("id", "bubbleText2");
-			drawBubbleText();
+			drawBubbles();
 		}
 	</script>
 </body>
