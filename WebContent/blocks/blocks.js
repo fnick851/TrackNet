@@ -2,12 +2,12 @@
 var td;
 var categories;
 function runMain() {
-	d3.json("../../Data/domainCategoryDict.json", function(error, json) {
+	d3.json("domainCategoryDict.json", function(error, json) {
 		if (error) return alert("Error loading categories: " + error);
 		categories = json;
 	});
 	
-	d3.json("../../visualization-data-anon-2/257.data.json", function(error, json) {
+	d3.json("visualization-data-anon-2/257.data.json", function(error, json) {
 	  if (error) return alert("Error loading data: " + error);
 	  td = json;
 	  visualizeit();
@@ -89,7 +89,8 @@ function getHeightForCat(step, category, categoryList) {
 
 var width=5;
 var height=20;
-var x=-width;
+var offset=150; // left margin for labels
+var x=offset;
 var trackedColor = "#CC5";
 var cookieColor = "#C65";
 var untrackedColor = "#6C5";
@@ -108,7 +109,7 @@ function visualizeit() {
 	
 	d3.select("#chart").text("");
 	var root = d3.select("#chart").append('svg')
-		.attr('width', width*firstparty.length)
+		.attr('width', width*firstparty.length+offset)
 		.attr('height', height*categoryList.length);
 	
 	root.selectAll("g").data(firstparty).enter()
@@ -134,10 +135,31 @@ function visualizeit() {
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; });
-		
-	// add bars underneath
+	
+	// add shading bars underneath
+	// commented out because this adds a bar per datum and that messes up the ordering of elements
+	/*
 	x = -width;
-	y = height;
+	y = height+width;
+	row = 0;
+	lastCat = '';
+	root.selectAll("g")
+		.append("rect")
+		.attr('x', 0)
+		.attr('y', function(d) { return y + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('width', width*firstparty.length)
+		.attr('height', height)
+		.attr('fill', function(d) {
+				var h = getHeightForCat(height, d.category, categoryList);
+				return (h/height%2==0)?"#FFF":"#CCC";
+			})
+		.attr('opacity', 0.1);
+		;
+	*/
+	
+	// add individual blocks per category
+	x = offset;
+	y = height+width;
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
@@ -149,6 +171,15 @@ function visualizeit() {
 			})
 		;
 	
+	// add labels
+	root.selectAll("g")
+		.append("text")
+		.attr('x', 0)
+		.attr('y', function(d) { return height*2 + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('font-family', 'Verdana')
+		.attr('font-size', (height*0.75)+"px")
+		.text(function(d) { return d.category; })
+		;
 	// for reference
 	/*x = -width;
 	y = height*2;
