@@ -64,6 +64,29 @@ function addCategoriesToJson(datalist) {
 	return datalist;
 }
 
+function getCategoryList(datalist) {
+	clist = {};
+	for (i=0;i<datalist.length;i++) {
+		clist[datalist[i].category] = 1;
+	}
+	clistKeys = [];
+	for (var key in clist) {
+		if (clist.hasOwnProperty(key))
+			clistKeys.push(key);
+	}
+	return clistKeys;
+}
+
+function getHeightForCat(step, category, categoryList) {
+	h = 0;
+	for (i=0;i<categoryList.length;i++) {
+		if (categoryList[i] == category)
+			break;
+		h += step;
+	}
+	return h;
+}
+
 var width=5;
 var height=20;
 var x=-width;
@@ -77,16 +100,16 @@ function visualizeit() {
 	firstparty = addCategoriesToJson(firstparty);
 	
 	// todo: control sort type with buttons
+	// sort by category (and by domain within)
+	//firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
 	// sort by domain
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
-	// sort by category (and by domain within)
-	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	
+	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").text("");
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length)
-		.attr('height', 200);
+		.attr('height', height*categoryList.length);
 	
 	root.selectAll("g").data(firstparty).enter()
 		.append("g")
@@ -95,7 +118,6 @@ function visualizeit() {
 				block.transition().duration(100).attr('opacity', 0.5);
 				var details = d3.select("#details");
 				details.text(block.data()[0].domain);
-				//details.append('p').text(categories[block.data()[0].domain]);
 				details.append('p').text(block.data()[0].category);
 			})
 		.on("mouseout", function() {
@@ -119,9 +141,24 @@ function visualizeit() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
+		.attr('y', function(d) { return y + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('width', width)
+		.attr('height', height)
+		.attr('fill', function(d) {
+				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+			})
+		;
+	
+	// for reference
+	/*x = -width;
+	y = height*2;
+	firstparty.forEach(function(d) {
+		root.append("rect")
+		.attr('x', function(d) { x += width; return x; })
 		.attr('y', y)
 		.attr('width', width)
 		.attr('height', height)
-		.attr('fill', unknownColor)
-		;
+		.attr('fill', unknownColor);
+		});
+	*/
 }
