@@ -23,6 +23,13 @@ text {
 .catgoryBubble {
   cursor: pointer;
 }
+.link {
+  fill: none;
+  stroke: gray;
+  stroke-width: 2px;
+  opacity: 0.6;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -31,7 +38,7 @@ text {
 		var svg = d3.select("body")
 		            .append("svg")
 		            .attr("width", 1500)
-		            .attr("height", 1000);
+		            .attr("height", 800);
 		
 		var completeData;
 		var domainId;
@@ -46,14 +53,15 @@ text {
 		var shrinkRadius = 20;
 		var rightMostAngle = 0;
 		
-		var boxTopLeft = [600,60];
-		var boxDimentions = [250,420];
-		var boxVisibleCapacity = 16;
-		var trackerItemHeight = 20;
+		var boxTopLeft = [600,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[1]];
+		var boxDimentions = [250,2*(bigRadius+2*bubbleSizeRange[1])];
+		var boxRadius = 40;
+		var boxVisibleCapacity = 17;
+		var trackerItemHeight = 22;
 		
-		var p1ListTopLeft = [900,60];
-		var p1ListItemDimentions = [180,20];
-		var p1ListVisibleCapacity = 16;
+		var p1ListTopLeft = [900,boxTopLeft[1]];
+		var p1ListItemDimentions = [180,trackerItemHeight];
+		var p1ListVisibleCapacity = boxVisibleCapacity;
 		
 		d3.json("data/851.adjacency.json", function(error, root) {
 			completeData = root;
@@ -130,8 +138,21 @@ text {
 			return bubbleCenter[1] + (data.R + data.r) * Math.sin(data.angle-rightMostAngle);
 		}
 		
+		function linkX(data) {
+			return bubbleCenter[0] + data.R * Math.cos(data.angle-rightMostAngle);
+		}
+		
+		function linkY(data) {
+			return bubbleCenter[1] + data.R * Math.sin(data.angle-rightMostAngle);
+		}
+		
 		function shrinkTransition(token, data) {
-			token.transition()
+			token.select("line")
+				 .transition()
+				 .attr("x2", linkX(data))
+				 .attr("y2", linkY(data));
+			token.select("circle")
+				 .transition()
 				 .attr("cx", bubbleX(data))
 				 .attr("cy", bubbleY(data))
 				 .attr("r", data.r)
@@ -253,14 +274,19 @@ text {
 			drawTriangle([boxTopLeft[0]+185,boxTopLeft[1]+navOffset], 270, data.index, null);
 		}
 		
+		var diagonal = d3.svg.diagonal()
+	     .source(function(d) { return {"x":d.source.y, "y":d.source.x}; })
+	     .target(function(d) { return {"x":d.target.y, "y":d.target.x}; })
+	     .projection(function(d) { return [d.y, d.x]; });
+		
 		function drawTrackersList(className, data) {
 			var token = svg.append("g").attr("id", className);
 			
 			token.append("rect")
 				 .attr("x", boxTopLeft[0])
 				 .attr("y", boxTopLeft[1])
-				 .attr("rx", 40)
-				 .attr("ry", 40)
+				 .attr("rx", boxRadius)
+				 .attr("ry", boxRadius)
 				 .attr("width", boxDimentions[0])
 				 .attr("height", boxDimentions[1])
 				 .attr("fill", "white")
@@ -273,13 +299,28 @@ text {
 				 .style("text-anchor", "middle")
 				 .text(data.category);
 			
+			var source = {"x":data.x+data.r,"y":data.y};
+			var links = [];
 			var boxData = [];
 			for (var i = 0; i < boxVisibleCapacity && i < p1Info[data.id].length; i++) {
 				var trackerId = p1Info[data.id][i];
-				boxData.push({"id":trackerId,
+				var y = boxTopLeft[1]+70+trackerItemHeight*i;
+				boxData.push({"index":i,
+							  "id":trackerId,
 							  "domain":completeData.domainList[trackerId],
-							  "p1Length":completeData.thirdPartyDomains[trackerId].domainList.length-1});
+							  "p1Length":completeData.thirdPartyDomains[trackerId].domainList.length-1,
+							  "y":y});
+				links.push({"source":source,
+							"target":{"x":boxTopLeft[0]+boxDimentions[0]*0.05,
+									  "y":y+trackerItemHeight*0.5}});
 			}
+	
+			token.selectAll(".link")
+		    	  .data(links)
+		          .enter()
+		          .append("path")
+		          .attr("class", "link")
+		          .attr("d", diagonal);
 			
 			var trackerButtons = token.selectAll("g")
 									  .data(boxData)
@@ -288,8 +329,8 @@ text {
 									  .attr("class", "trackerButton");
 			trackerButtons.append("rect")
 						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.05)
-						  .attr("y", function(d, i) {
-							  return boxTopLeft[1]+70+trackerItemHeight*i;
+						  .attr("y", function(d) {
+							  return d.y;
 						  })
 						  .attr("rx", 5)
 						  .attr("ry", 5)
@@ -300,16 +341,16 @@ text {
 						  .attr("opacity", 0.15);
 			trackerButtons.append("text")
 						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.1)
-						  .attr("y", function(d, i) {
-							  return boxTopLeft[1]+85+trackerItemHeight*i;
+						  .attr("y", function(d) {
+							  return d.y+15;
 						  })
 						  .text(function(d) {
 							  return d.domain;
 						  });
 			trackerButtons.append("text")
 						  .attr("x", boxTopLeft[0] + boxDimentions[0] * 0.83)
-						  .attr("y", function(d, i) {
-							  return boxTopLeft[1]+85+trackerItemHeight*i;
+						  .attr("y", function(d) {
+							  return d.y+15;
 						  })
 						  .style("text-anchor", "end")
 						  .text(function(d) {
@@ -329,14 +370,30 @@ text {
 				  .style("text-anchor", "middle")
 				  .text("First-party Domains");
 			
+			var source = {"x":boxTopLeft[0]+boxDimentions[0]*0.95,"y":data.y+trackerItemHeight*0.5};
+			var links = [];
 			var p1ListData = [];
 			var list = completeData.thirdPartyDomains[data.id].domainList;
 			for (var i = 0; i < p1ListVisibleCapacity && i < list.length; i++) {
 				var p1Id = list[i];
 				if (domainId == p1Id)
 					continue;
-				p1ListData.push({"id":p1Id,"domain":completeData.domainList[p1Id]});
+				var y = p1ListTopLeft[1]+70+p1ListItemDimentions[1]*p1ListData.length;
+				p1ListData.push({"index":p1ListData.length,
+								 "id":p1Id,
+								 "domain":completeData.domainList[p1Id],
+								 "y":y});
+				links.push({"source":source,
+							"target":{"x":p1ListTopLeft[0],"y":y+p1ListItemDimentions[1]*0.5}});
 			}
+			
+			p1List.selectAll(".link")
+            	  .data(links)
+	              .enter()
+	              .append("path")
+	              .attr("class", "link")
+	              .attr("d", diagonal);
+			
 			var p1Items = p1List.selectAll("g")
 								.data(p1ListData)
 								.enter()
@@ -344,8 +401,8 @@ text {
 								.attr("class", "p1Item");
 			p1Items.append("rect")
 				   .attr("x", p1ListTopLeft[0])
-				   .attr("y", function(d, i) {
-					   return p1ListTopLeft[1]+70+p1ListItemDimentions[1]*i;
+				   .attr("y", function(d) {
+					   return d.y;
 				   })
 				   .attr("rx", 5)
 				   .attr("ry", 5)
@@ -355,8 +412,8 @@ text {
 				   .attr("opacity", 0.15);
 			p1Items.append("text")
 				   .attr("x", p1ListTopLeft[0] + p1ListItemDimentions[0] * 0.1)
-				   .attr("y", function(d, i) {
-					   return p1ListTopLeft[1]+85+p1ListItemDimentions[1]*i;
+				   .attr("y", function(d) {
+					   return d.y+15;
 				   })
 				   .text(function(d) {
 					   return d.domain;
@@ -364,8 +421,17 @@ text {
 		}
 		
 		function drawBubbles() {
-			svg.selectAll(".catgoryBubble")
-			   .select("#bubbleText1")
+			svg.selectAll(".catgoryBubble line")
+			   .transition()
+			   .attr("x1", bubbleCenter[0])
+			   .attr("y1", bubbleCenter[1])
+			   .attr("x2", function(d) {
+				   return linkX(d);
+			   })
+			   .attr("y2", function(d) {
+				   return linkY(d);
+			   });
+			svg.selectAll("#bubbleText1")
 			   .transition()
 			   .attr("x", function(d) {
 				   return d.x;
@@ -380,10 +446,9 @@ text {
 				   return d.category.substr(0,15);
 			   })
 			   .attr("visibility", function(d) {
-				   return !d.shrink || d.showText ? null : "hidden";
+				   return d.shrink ? "hidden" : null;
 			   });
-			svg.selectAll(".catgoryBubble")
-			   .select("#bubbleText2")
+			svg.selectAll("#bubbleText2")
 			   .transition()
 			   .attr("x", function(d) {
 				   return d.x;
@@ -398,10 +463,9 @@ text {
 				   return d.size;
 			   })
 			   .attr("visibility", function(d) {
-				   return !d.shrink || d.showText ? null : "hidden";
+				   return d.shrink ? "hidden" : null;
 			   });
-			return svg.selectAll(".catgoryBubble")
-				      .select("circle")
+			return svg.selectAll(".catgoryBubble circle")
 				      .transition()
 				      .attr("cx", function(d) {
 					      return d.x;
@@ -412,6 +476,13 @@ text {
 				      .attr("r", function(d) {
 					      return d.r;
 				      });
+		}
+		
+		function setRightPartVisibility(visibility) {
+			d3.select("#trackersBox")
+			  .attr("visibility", visibility);
+			d3.select("#p1List").remove()
+			  .attr("visibility", visibility);
 		}
 		
 		function drawGraph() {
@@ -431,8 +502,8 @@ text {
 			   .append("g")
 			   .attr("class", "catgoryBubble")
 			   .on("click", function(data) {
-				   var circle = d3.select(this).select("circle");
 				   if (data.shrink != true) {
+					   var circle = d3.select(this).select("circle");
 					   if (d3.mouse(this)[1] > circle.attr("cy")-circle.attr("r")/2) {
 						   // Move a bubble to the right-most position.
 						   rightMostAngle = data.angle;
@@ -456,7 +527,7 @@ text {
 						   data.shrink = bubbleData[data.index].shrink = true;
 						   data.R = smallRadius;
 						   data.r = shrinkRadius;
-						   shrinkTransition(circle, data);
+						   shrinkTransition(d3.select(this), data);
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
 						   d3.select("#trackersBox").remove();
@@ -467,37 +538,41 @@ text {
 					   data.shrink = bubbleData[data.index].shrink = false;
 					   data.R = bigRadius;
 					   data.r = data.r;
-					   shrinkTransition(circle, data);
+					   shrinkTransition(d3.select(this), data);
 					   d3.select("#trackersBox").remove();
 					   d3.select("#p1List").remove();
 				   }
 			   })
 			   .on("mouseover", function(data) {
-				   data.showText = true;
-				   // Enlarge the bubble
-				   data.r = bubbleSizeRange[1];
-				   data.x = bubbleX(data);
-				   data.y = bubbleY(data);
-				   var enlargeCount = 0;
-				   var circles = drawBubbles();
-				   circles.each("start", function() {
-					   enlargeCount++;
-				   })
-				   .each("end", function() {
-					   if ( --enlargeCount != 0 )
-						   return;
-					   // Display a close button
-					   if (data.shrink != true) {
-						   var y = data.y-data.r*3/4;
-						   var r = data.r/4;
-						   drawCloseButton(data.x, y, r);
-					   }
-				   });
-				   // Display a tooltip
-				   drawTrackersList("categoryTooltip", data);
+				   setRightPartVisibility("hidden");
+				   if (!data.shrink) {
+					   // Enlarge the bubble
+					   data.r = bubbleSizeRange[1];
+					   data.x = bubbleX(data);
+					   data.y = bubbleY(data);
+					   var enlargeCount = 0;
+					   var circles = drawBubbles();
+					   circles.each("start", function() {
+						   enlargeCount++;
+					   })
+					   .each("end", function() {
+						   if ( --enlargeCount != 0 )
+							   return;
+						   // Display a close button
+						   if (data.shrink != true) {
+							   var y = data.y-data.r*3/4;
+							   var r = data.r/4;
+							   drawCloseButton(data.x, y, r);
+						   }
+						   // Display a tooltip
+						   drawTrackersList("categoryTooltip", data);
+					   });
+				   } else {
+					   drawTrackersList("categoryTooltip", data);
+				   }
 			   })
 			   .on("mouseout", function(data) {
-				   data.showText = false;
+				   setRightPartVisibility(null);
 				   reDrawBubbles();
 				   d3.select("#closeButton").remove();
 				   d3.select("#categoryTooltip").remove();
@@ -509,7 +584,9 @@ text {
 				   return colors(i);
 			   })
 			   .attr("opacity", 0.8);
-			
+			svg.selectAll(".catgoryBubble")
+			   .append("line")
+			   .attr("class", "link");
 			svg.selectAll(".catgoryBubble")
 			   .append("text")
 			   .attr("class", "bubbleText")
