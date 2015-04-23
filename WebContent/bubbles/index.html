@@ -267,17 +267,16 @@ text {
 			var navOffset = 10;
 			var triLeft = drawTriangle([boxTopLeft[0]+45,boxTopLeft[1]+navOffset], 90, data.index, null);
 			triLeft.on("click", function() {
-				d3.select("#trackersBox").remove();
-				d3.select("#p1List").remove();
+				removeRightPart();
 			});
 			drawTriangle([boxTopLeft[0]+115,boxTopLeft[1]+navOffset], 0, data.index, "hidden");
 			drawTriangle([boxTopLeft[0]+185,boxTopLeft[1]+navOffset], 270, data.index, null);
 		}
 		
 		var diagonal = d3.svg.diagonal()
-	     .source(function(d) { return {"x":d.source.y, "y":d.source.x}; })
-	     .target(function(d) { return {"x":d.target.y, "y":d.target.x}; })
-	     .projection(function(d) { return [d.y, d.x]; });
+					     .source(function(d) { return {"x":d.source.y, "y":d.source.x}; })
+					     .target(function(d) { return {"x":d.target.y, "y":d.target.x}; })
+					     .projection(function(d) { return [d.y, d.x]; });
 		
 		function drawTrackersList(className, data) {
 			var token = svg.append("g").attr("id", className);
@@ -316,11 +315,11 @@ text {
 			}
 	
 			token.selectAll(".link")
-		    	  .data(links)
-		          .enter()
-		          .append("path")
-		          .attr("class", "link")
-		          .attr("d", diagonal);
+				 .data(links)
+				 .enter()
+				 .append("path")
+				 .attr("class", "link")
+				 .attr("d", diagonal);
 			
 			var trackerButtons = token.selectAll("g")
 									  .data(boxData)
@@ -485,6 +484,14 @@ text {
 			  .attr("visibility", visibility);
 		}
 		
+		function removeRightPart() {
+			svg.selectAll(".catgoryBubble")
+			   .attr("visibility", null)
+			   .attr("pointer-events", null);
+			d3.select("#trackersBox").remove();
+			d3.select("#p1List").remove();
+		}
+		
 		function drawGraph() {
 			// Draw the central bubble
 			svg.append("circle")
@@ -505,6 +512,7 @@ text {
 				   if (data.shrink != true) {
 					   var circle = d3.select(this).select("circle");
 					   if (d3.mouse(this)[1] > circle.attr("cy")-circle.attr("r")/2) {
+						   var thisBubble = d3.select(this);
 						   // Move a bubble to the right-most position.
 						   rightMostAngle = data.angle;
 						   var toRightCount = 0;
@@ -517,11 +525,28 @@ text {
 								   return;
 							   // Show the trackers' box.
 							   drawTrackersBox(data);
+							   thisBubble.attr("visibility", "hidden")
+							   			 .attr("pointer-events", "none");
+							   svg.select("#trackersBox")
+							   	  .append("line")
+							   	  .attr("class", "link")
+							   	  .attr("x1", bubbleCenter[0])
+							   	  .attr("y1", bubbleCenter[1])
+							   	  .attr("x2", data.x+data.r)
+							   	  .attr("y2", data.y);
+							   svg.select("#trackersBox line")
+							      .transition()
+							   	  .attr("x2", data.x-data.r);
+							   svg.selectAll("#trackersBox path.link")
+							      .transition()
+					              .attr("d", function(d) {
+					            	  d.source.x = data.x-data.r;
+					            	  return diagonal(d);
+								  });
 						   });
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
-						   d3.select("#trackersBox").remove();
-						   d3.select("#p1List").remove();
+						   removeRightPart();
 					   } else {
 						   // Shrink a bubble
 						   data.shrink = bubbleData[data.index].shrink = true;
@@ -530,8 +555,7 @@ text {
 						   shrinkTransition(d3.select(this), data);
 						   d3.select("#closeButton").remove();
 						   d3.select("#categoryTooltip").remove();
-						   d3.select("#trackersBox").remove();
-						   d3.select("#p1List").remove();
+						   removeRightPart();
 					   }
 				   } else {
 					   // Expand a bubble
@@ -539,8 +563,7 @@ text {
 					   data.R = bigRadius;
 					   data.r = data.r;
 					   shrinkTransition(d3.select(this), data);
-					   d3.select("#trackersBox").remove();
-					   d3.select("#p1List").remove();
+					   removeRightPart();
 				   }
 			   })
 			   .on("mouseover", function(data) {
