@@ -25,6 +25,7 @@ text {
 .p1Item {
   font-size: 12px;
 }
+.viewButton,
 .catgoryBubble,
 .trackerButton,
 .p1Item {
@@ -46,14 +47,20 @@ text {
                     .attr("width", 1500)
                     .attr("height", 600);
         var colors = d3.scale.category10();
+        var viewType;
         
         var completeData;
         var domainId;
+        var categoryId;
+        
+        var viewButtonTopLeft = [20,20];
+        var viewButtonDimentions = [100,30];
+        var tipTopLeft = [450,70];
         
         var p1Info;
         var bubbleData;
-        var bubbleCenter = [300,300];
-        var centralBubbleRadius = 25;
+        var bubbleCenter = [300,350];
+        var centralBubbleRadius = 30;
         var bigRadius = 120;
         var smallRadius = 60;
         var bubbleSizeRange = [20, 60];
@@ -74,17 +81,114 @@ text {
         
         var nextScreenX = 1100;
         
-        d3.json("data/851.adjacency.json", function(error, root) {
-            completeData = root;
-            loadData(1004);
-            drawGraph();
+        d3.json("data/851.adjacency.json", function(error, data) {
+        	completeData = data;
+        	initView();
         });
         
+        function initView() {
+        	viewType = "domain";
+        	loadData(1004);
+	        drawGraph();
+        	
+        	var viewButtons = svg.append("g")
+                                 .attr("id", "viewButtons");
+        	viewButtons.append("rect")
+        	           .attr("x", viewButtonTopLeft[0])
+        	           .attr("y", viewButtonTopLeft[1]+viewButtonDimentions[1])
+        	           .attr("width", 400)
+                       .attr("height", viewButtonDimentions[1])
+                       .attr("fill", "white")
+                       .attr("stroke", colors(0))
+                       .attr("opacity", 0.8);
+        	
+        	var viewButtonData = ["Website", "Category"];
+        	viewButtons.selectAll("g")
+                       .data(viewButtonData)
+                       .enter()
+                       .append("g")
+                       .attr("class", "viewButton")
+                       .attr("status", function(d, i) {
+                           return i == 0 ? "on" : "off";
+                       })
+                       .attr("transform", function(d, i) {
+                           return d3.svg.transform()
+                                    .translate([viewButtonTopLeft[0]+viewButtonDimentions[0]*i,
+                                                viewButtonTopLeft[1]])();
+                       });
+        	viewButtons.selectAll(".viewButton")
+        	           .append("rect")
+                       .attr("rx", 5)
+                       .attr("ry", 5)
+                       .attr("width", viewButtonDimentions[0])
+                       .attr("height", viewButtonDimentions[1])
+                       .attr("fill", function(d, i) {
+                           return i == 0 ? colors(0) : "white";
+                       })
+                       .attr("stroke", colors(0))
+                       .attr("opacity", 0.8);
+        	viewButtons.selectAll(".viewButton")
+	                   .append("text")
+	                   .attr("x", viewButtonDimentions[0]*0.5)
+	                   .attr("y", viewButtonDimentions[1]*0.75)
+	                   .style("text-anchor", "middle")
+	                   .attr("fill", function(d, i) {
+                           return i == 1 ? colors(0) : "white";
+                       })
+	                   .text(function(d) {
+                           return d;
+                       });
+        	viewButtons.selectAll(".viewButton")
+        	           .on("mouseover", function() {
+        	        	   if (d3.select(this).attr("status") == "off") {
+        	        	       d3.select(this).select("rect")
+                                 .attr("fill", colors(0));
+                               d3.select(this).select("text")
+                                 .attr("fill", "white");
+        	        	   }
+                       })
+                       .on("mouseout", function() {
+                    	   if (d3.select(this).attr("status") == "off") {
+        	        	       d3.select(this).select("rect")
+                                 .attr("fill", "white");
+                               d3.select(this).select("text")
+                                 .attr("fill", colors(0));
+        	        	   }
+                       })
+                       .on("click", function(d) {
+                    	   if (d3.select(this).attr("status") == "off") {
+                    		   viewButtons.select(".viewButton[status=on] rect")
+                    		              .attr("fill", "white");
+                    		   viewButtons.select(".viewButton[status=on] text")
+         		                          .attr("fill", colors(0));
+                    		   viewButtons.select(".viewButton[status=on]")
+         		                          .attr("status", "off");
+                    		   d3.select(this).attr("status", "on");
+                    		   if (d == "Website") {
+                    			   viewType = "domain";
+                    	           loadData(1004);
+                    		   } else if (d == "Category") {
+                    			   viewType = "category";
+                    	           loadData(19);
+                    		   }
+                	           drawGraph();
+                    	   }
+                       });
+        }
+        
         function loadData(id) {
-            domainId = id;
+        	switch (viewType) {
+            case "domain":
+            	domainId = id;
+            	p1Info = completeData.firstPartyDomains[domainId];
+                break;
+            case "category":
+            	categoryId = id;
+            	p1Info = completeData.firstPartyCategories[categoryId];
+                break;
+            }
             bubbleData = [];
             rightMostAngle = 0;
-            p1Info = completeData.firstPartyDomains[domainId];
             for (var i = 0; i < p1Info.catList.length; i++) {
                 bubbleData.push({ "index": i,
                                   "id": p1Info.catList[i],
@@ -466,7 +570,6 @@ text {
                  .text(data.category);
             
             var source = {"x":data.x+data.r,"y":data.y};
-            var links = [];
             var boxData = [];
             for (var i = 0; i < boxVisibleCapacity && i < p1Info[data.id].length; i++) {
                 var trackerId = p1Info[data.id][i];
@@ -528,7 +631,7 @@ text {
             P1Items.on("mouseover", function() {
                        d3.select(this)
                          .append("title")
-                         .text("Click to explore this domain.");
+                         .text("Click to explore it.");
                        d3.select(this).select("text")
                          .attr("font-weight", "bold");
                    })
@@ -552,13 +655,16 @@ text {
                              svg.select("#canvas")
                                 .transition()
                                 .duration(1000)
-                                .attr("transform", function(d) {
+                                .attr("transform", function() {
                                     return d3.svg.transform().translate([-nextScreenX,0])();
                                 })
                                 .each("end", function() {
-                                    domainId = d.id;
-                                    svg.select("#canvas").remove();
-                                    loadData(domainId);
+                                	if (viewType == "domain") {
+                                		domainId = d.id;
+                                	} else {
+                                		categoryId = d.id;
+                                	}
+                                    loadData(d.id);
                                     drawGraph();
                                 });
                          });
@@ -590,17 +696,17 @@ text {
                             "y":trackerItemTopLeft[1]+data.y+data.dy*0.5}
                          : {"x":boxTopLeft[0]+boxDimentions[0]*0.95,
                             "y":data.rectY+trackerItemHeight*0.5};
-            var links = [];
             var p1ListData = [];
-            var list = completeData.thirdPartyDomains[data.id].domainList;
-            for (var i = 0; i < p1ListVisibleCapacity && i < list.length; i++) {
+            var listType = viewType == "domain" ? "domainList" : "catList";
+            var list = completeData.thirdPartyDomains[data.id][listType];
+            for (var i = 0; p1ListData.length < p1ListVisibleCapacity && i < list.length; i++) {
                 var p1Id = list[i];
                 if (domainId == p1Id)
                     continue;
                 var y = p1ListTopLeft[1]+70+p1ListItemDimentions[1]*p1ListData.length;
                 p1ListData.push({"index":p1ListData.length,
                                  "id":p1Id,
-                                 "domain":completeData.domainList[p1Id],
+                                 "label":completeData[listType][p1Id],
                                  "y":y,
                                  "link":{"source":source,
                                          "target":{"x":p1ListLeft,
@@ -629,7 +735,7 @@ text {
                        return d.y+15;
                    })
                    .text(function(d) {
-                       return d.domain;
+                       return d.label;
                    });
             p1Items.append("path")
                    .attr("class", "link")
@@ -713,17 +819,25 @@ text {
         }
         
         function drawGraph() {
-            svg.append("g")
-               .attr("id", "canvas");
-            // Draw the central bubble
-            svg.select("#canvas")
-               .append("circle")
-               .attr("class", "centralBubble")
-               .attr("cx", bubbleCenter[0])
-               .attr("cy", bubbleCenter[1])
-               .attr("r", centralBubbleRadius)
-               .append("title")
-               .text(completeData.domainList[domainId]);
+        	var label = viewType == "domain" 
+        	            ? completeData.domainList[domainId]
+   		                : completeData.catList[categoryId];
+        	svg.select("#canvas").remove();
+        	canvas = svg.append("g")
+                        .attr("id", "canvas");
+            // Draw the central bubble and the tip
+            canvas.append("circle")
+                  .attr("class", "centralBubble")
+                  .attr("cx", bubbleCenter[0])
+                  .attr("cy", bubbleCenter[1])
+                  .attr("r", centralBubbleRadius)
+                  .append("title")
+                  .text(label);
+            canvas.append("text")
+	              .attr("id", "tip")
+                  .attr("x", tipTopLeft[0])
+                  .attr("y", tipTopLeft[1])
+                  .text("You are now exploring \"" + label + "\".");
             // Bubble events
             computeBubblePositions();
             svg.select("#canvas")
