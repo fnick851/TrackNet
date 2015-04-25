@@ -5,13 +5,14 @@
 <title>TrackNet: Bubbles View</title>
 <script type="text/javascript" src="../lib/d3.min.js"></script>
 <script type="text/javascript" src="../lib/d3-transform.js"></script>
-<script type="text/javascript" src="../lib/d3plus.min.js"></script>
 <style>
 text {
-  /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
-  font-family: sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   pointer-events: none;
   /*letter-spacing: 0.05em;*/
+}
+.viewButton rect {
+  opacity: 0.7;
 }
 .centralBubble {
   fill: gray;
@@ -20,6 +21,9 @@ text {
 .catgoryBubble text {
   text-anchor: middle;
   fill: white;
+}
+.catgoryBubble circle {
+  opacity: 0.7;
 }
 .trackerButton,
 .p1Item {
@@ -45,7 +49,7 @@ text {
         var svg = d3.select("body")
                     .append("svg")
                     .attr("width", 1500)
-                    .attr("height", 600);
+                    .attr("height", 700);
         var colors = d3.scale.category10();
         var viewType;
         
@@ -63,15 +67,15 @@ text {
         var centralBubbleRadius = 30;
         var bigRadius = 120;
         var smallRadius = 60;
-        var bubbleSizeRange = [20, 60];
-        var bubbleScale;
+        var bubbleSizeRange = [60, 20];
+        var bubbleVisibleCapacity = 15;
         var shrinkRadius = 20;
         var rightMostAngle = 0;
         
-        var boxTopLeft = [600,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[1]];
-        var boxDimentions = [250,2*(bigRadius+2*bubbleSizeRange[1]),500];
+        var boxTopLeft = [600,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
+        var boxDimentions = [250,490,500];
         var trackerItemTopLeft = [boxTopLeft[0]+boxDimentions[0]*0.05,boxTopLeft[1]+70];
-        var boxVisibleCapacity = 17;
+        var boxVisibleCapacity = 18;
         var trackerItemHeight = 22;
         var showingTreemap = false;
         
@@ -82,28 +86,29 @@ text {
         var nextScreenX = 1100;
         
         d3.json("data/851.adjacency.json", function(error, data) {
-        	completeData = data;
-        	initView();
+            completeData = data;
+            initView();
         });
         
         function initView() {
-        	viewType = "domain";
-        	loadData(1004);
-	        drawGraph();
-        	
-        	var viewButtons = svg.append("g")
+            viewType = "domain";
+            domainId = 1004;
+            categoryId = 19;
+            loadData(domainId);
+            drawGraph();
+            
+            var viewButtons = svg.append("g")
                                  .attr("id", "viewButtons");
-        	viewButtons.append("rect")
-        	           .attr("x", viewButtonTopLeft[0])
-        	           .attr("y", viewButtonTopLeft[1]+viewButtonDimentions[1])
-        	           .attr("width", 400)
+            viewButtons.append("rect")
+                       .attr("x", viewButtonTopLeft[0])
+                       .attr("y", viewButtonTopLeft[1]+viewButtonDimentions[1])
+                       .attr("width", 400)
                        .attr("height", viewButtonDimentions[1])
                        .attr("fill", "white")
-                       .attr("stroke", colors(0))
-                       .attr("opacity", 0.8);
-        	
-        	var viewButtonData = ["Website", "Category"];
-        	viewButtons.selectAll("g")
+                       .attr("stroke", colors(0));
+            
+            var viewButtonData = ["Website", "Category"];
+            viewButtons.selectAll("g")
                        .data(viewButtonData)
                        .enter()
                        .append("g")
@@ -116,8 +121,8 @@ text {
                                     .translate([viewButtonTopLeft[0]+viewButtonDimentions[0]*i,
                                                 viewButtonTopLeft[1]])();
                        });
-        	viewButtons.selectAll(".viewButton")
-        	           .append("rect")
+            viewButtons.selectAll(".viewButton")
+                       .append("rect")
                        .attr("rx", 5)
                        .attr("ry", 5)
                        .attr("width", viewButtonDimentions[0])
@@ -127,64 +132,64 @@ text {
                        })
                        .attr("stroke", colors(0))
                        .attr("opacity", 0.8);
-        	viewButtons.selectAll(".viewButton")
-	                   .append("text")
-	                   .attr("x", viewButtonDimentions[0]*0.5)
-	                   .attr("y", viewButtonDimentions[1]*0.75)
-	                   .style("text-anchor", "middle")
-	                   .attr("fill", function(d, i) {
+            viewButtons.selectAll(".viewButton")
+                       .append("text")
+                       .attr("x", viewButtonDimentions[0]*0.5)
+                       .attr("y", viewButtonDimentions[1]*0.75)
+                       .style("text-anchor", "middle")
+                       .attr("fill", function(d, i) {
                            return i == 1 ? colors(0) : "white";
                        })
-	                   .text(function(d) {
+                       .text(function(d) {
                            return d;
                        });
-        	viewButtons.selectAll(".viewButton")
-        	           .on("mouseover", function() {
-        	        	   if (d3.select(this).attr("status") == "off") {
-        	        	       d3.select(this).select("rect")
+            viewButtons.selectAll(".viewButton")
+                       .on("mouseover", function() {
+                           if (d3.select(this).attr("status") == "off") {
+                               d3.select(this).select("rect")
                                  .attr("fill", colors(0));
                                d3.select(this).select("text")
                                  .attr("fill", "white");
-        	        	   }
+                           }
                        })
                        .on("mouseout", function() {
-                    	   if (d3.select(this).attr("status") == "off") {
-        	        	       d3.select(this).select("rect")
+                           if (d3.select(this).attr("status") == "off") {
+                               d3.select(this).select("rect")
                                  .attr("fill", "white");
                                d3.select(this).select("text")
                                  .attr("fill", colors(0));
-        	        	   }
+                           }
                        })
                        .on("click", function(d) {
-                    	   if (d3.select(this).attr("status") == "off") {
-                    		   viewButtons.select(".viewButton[status=on] rect")
-                    		              .attr("fill", "white");
-                    		   viewButtons.select(".viewButton[status=on] text")
-         		                          .attr("fill", colors(0));
-                    		   viewButtons.select(".viewButton[status=on]")
-         		                          .attr("status", "off");
-                    		   d3.select(this).attr("status", "on");
-                    		   if (d == "Website") {
-                    			   viewType = "domain";
-                    	           loadData(1004);
-                    		   } else if (d == "Category") {
-                    			   viewType = "category";
-                    	           loadData(19);
-                    		   }
-                	           drawGraph();
-                    	   }
+                           if (d3.select(this).attr("status") == "off") {
+                               viewButtons.select(".viewButton[status=on] rect")
+                                          .attr("fill", "white");
+                               viewButtons.select(".viewButton[status=on] text")
+                                           .attr("fill", colors(0));
+                               viewButtons.select(".viewButton[status=on]")
+                                           .attr("status", "off");
+                               d3.select(this).attr("status", "on");
+                               if (d == "Website") {
+                                   viewType = "domain";
+                                   loadData(domainId);
+                               } else if (d == "Category") {
+                                   viewType = "category";
+                                   loadData(categoryId);
+                               }
+                               drawGraph();
+                           }
                        });
         }
         
         function loadData(id) {
-        	switch (viewType) {
+            switch (viewType) {
             case "domain":
-            	domainId = id;
-            	p1Info = completeData.firstPartyDomains[domainId];
+                domainId = id;
+                p1Info = completeData.firstPartyDomains[domainId];
                 break;
             case "category":
-            	categoryId = id;
-            	p1Info = completeData.firstPartyCategories[categoryId];
+                categoryId = id;
+                p1Info = completeData.firstPartyCategories[categoryId];
                 break;
             }
             bubbleData = [];
@@ -201,17 +206,28 @@ text {
             var bigBubbleIdx = [-1,-1];
             var smallBubbleIdx = [-1,-1];
             var sizeRange = [-1,-1];
+            var numberOfBigBubbles = 0;
             for (var i = 0; i < bubbleData.length; i++) {
                 if (bubbleData[i].shrink != true) {
-                    if (sizeRange[1] < 0) {
-                        sizeRange[1] = bubbleData[i].size;
+                    if (sizeRange[0] < 0) {
+                        sizeRange[0] = bubbleData[i].size;
                     }
-                    sizeRange[0] = bubbleData[i].size;
+                    sizeRange[1] = bubbleData[i].size;
+                    numberOfBigBubbles++;
                 }
             }
-            bubbleScale = d3.scale.sqrt()
-                            .domain(sizeRange)
-                            .range(bubbleSizeRange);
+            var minScale;
+            if (numberOfBigBubbles > bubbleVisibleCapacity) {
+                minScale = bubbleSizeRange[1];
+            } else {
+                var scale = d3.scale.linear()
+                              .domain([1,bubbleVisibleCapacity])
+                              .range(bubbleSizeRange);
+                minScale = scale(numberOfBigBubbles);
+            }
+            var bubbleScale = d3.scale.sqrt()
+                                .domain(sizeRange)
+                                .range([bubbleSizeRange[0],minScale]);
             for (var i = 0; i < bubbleData.length; i++) {
                 if (bubbleData[i].shrink != true) {
                     bubbleData[i].R = bigRadius;
@@ -659,11 +675,11 @@ text {
                                     return d3.svg.transform().translate([-nextScreenX,0])();
                                 })
                                 .each("end", function() {
-                                	if (viewType == "domain") {
-                                		domainId = d.id;
-                                	} else {
-                                		categoryId = d.id;
-                                	}
+                                    if (viewType == "domain") {
+                                        domainId = d.id;
+                                    } else {
+                                        categoryId = d.id;
+                                    }
                                     loadData(d.id);
                                     drawGraph();
                                 });
@@ -819,11 +835,11 @@ text {
         }
         
         function drawGraph() {
-        	var label = viewType == "domain" 
-        	            ? completeData.domainList[domainId]
-   		                : completeData.catList[categoryId];
-        	svg.select("#canvas").remove();
-        	canvas = svg.append("g")
+            var label = viewType == "domain" 
+                        ? completeData.domainList[domainId]
+                           : completeData.catList[categoryId];
+            svg.select("#canvas").remove();
+            canvas = svg.append("g")
                         .attr("id", "canvas");
             // Draw the central bubble and the tip
             canvas.append("circle")
@@ -834,7 +850,7 @@ text {
                   .append("title")
                   .text(label);
             canvas.append("text")
-	              .attr("id", "tip")
+                  .attr("id", "tip")
                   .attr("x", tipTopLeft[0])
                   .attr("y", tipTopLeft[1])
                   .text("You are now exploring \"" + label + "\".");
@@ -910,7 +926,7 @@ text {
                    setRightPartVisibility("hidden");
                    if (!data.shrink) {
                        // Enlarge the bubble
-                       data.r = bubbleSizeRange[1]*1.05;
+                       data.r = bubbleSizeRange[0]*1.05;
                        data.x = bubbleX(data);
                        data.y = bubbleY(data);
                        var enlargeCount = 0;
@@ -948,8 +964,7 @@ text {
                .attr("r", centralBubbleRadius)
                .attr("fill", function(d, i) {
                    return colors(i);
-               })
-               .attr("opacity", 0.8);
+               });
             svg.selectAll(".catgoryBubble")
                .append("line")
                .attr("class", "link")
