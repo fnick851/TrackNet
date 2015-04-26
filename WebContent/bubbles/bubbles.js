@@ -5,10 +5,11 @@ var viewType;
 var completeData;
 var domainId;
 var categoryId;
+var skipedCategoryIdDict = {};
 
 var p1Info;
 var bubbleData;
-var bubbleCenter = [300,260];
+var bubbleCenter = [260,260];
 var centralBubbleRadius = 30;
 var bigRadius = 120;
 var smallRadius = 60;
@@ -17,18 +18,31 @@ var bubbleVisibleCapacity = 15;
 var shrinkRadius = 20;
 var rightMostAngle = 0;
 
-var boxTopLeft = [600,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
+var boxTopLeft = [550,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
 var boxDimentions = [250,490,500];
 var trackerItemTopLeft = [boxTopLeft[0]+boxDimentions[0]*0.05,boxTopLeft[1]+70];
 var boxVisibleCapacity = 18;
 var trackerItemHeight = 22;
 var showingTreemap = false;
 
-var p1ListTopLeft = [900,boxTopLeft[1]];
+var p1ListTopLeft = [850,boxTopLeft[1]];
 var p1ListItemDimentions = [180,trackerItemHeight];
 var p1ListVisibleCapacity = boxVisibleCapacity;
 
-var nextScreenX = 1100;
+var nextScreenX = 1000;
+
+function init(selector) {
+    svg = d3.select(selector)
+            .append("svg")
+            .attr("width", 1300)
+            .attr("height", 520);
+    viewType = "domain";
+    loadData(domainId);
+    drawGraph();
+    for (var cid in completeData.catList) {
+        skipedCategoryIdDict[cid] = false;
+    }
+}
 
 function loadData(id) {
     switch (viewType) {
@@ -47,7 +61,8 @@ function loadData(id) {
         bubbleData.push({ "index": i,
                           "id": p1Info.catList[i],
                           "category": completeData.catList[p1Info.catList[i]],
-                          "size": p1Info[p1Info.catList[i]].length });
+                          "size": p1Info[p1Info.catList[i]].length,
+                          "shrink": skipedCategoryIdDict[p1Info.catList[i]]});
     }
 }
 
@@ -137,7 +152,7 @@ function shrinkTransition(token, data) {
          .transition()
          .attr("x2", linkX(data))
          .attr("y2", linkY(data));
-    token.select("circle")
+    token.selectAll("circle")
          .transition()
          .attr("cx", bubbleX(data))
          .attr("cy", bubbleY(data))
@@ -390,6 +405,8 @@ function drawTrackersBox(data) {
                .transition()
                .attr("width", boxDimentions[0] * 0.9)
                .attr("height", trackerItemHeight);
+            svg.selectAll(".trackerButtonGroup text")
+               .attr("visibility", null);
             svg.selectAll(".trackerButtonGroup text.size")
                .attr("x", boxDimentions[0] * 0.78)
                .attr("y", 15)
@@ -492,48 +509,48 @@ function drawTrackersList(className, data) {
 }
 
 function drawP1Box(data) {
-    var P1Items = drawP1List(data);
-    P1Items.on("mouseover", function() {
-               d3.select(this)
-                 .append("title")
-                 .text("Click to explore it.");
-               d3.select(this).select("text")
-                 .attr("font-weight", "bold");
-           })
-           .on("mouseout", function() {
-               d3.select(this).select("title").remove();
-               d3.select(this).select("text")
-                 .attr("font-weight", null);
-           })
-           .on("click", function(d) {
-               d3.select(this).select("rect")
-                 .transition()
-                 .duration(500)
-                 .attr("class", "centralBubble")
-                 .attr("x", nextScreenX + bubbleCenter[0]-centralBubbleRadius)
-                 .attr("y", bubbleCenter[1]-centralBubbleRadius)
-                 .attr("width", 2*centralBubbleRadius)
-                 .attr("height", 2*centralBubbleRadius)
-                 .attr("rx", centralBubbleRadius)
-                 .attr("ry", centralBubbleRadius)
-                 .each("end", function() {
-                     svg.select("#canvas")
-                        .transition()
-                        .duration(1000)
-                        .attr("transform", function() {
-                            return d3.svg.transform().translate([-nextScreenX,0])();
-                        })
-                        .each("end", function() {
-                            if (viewType == "domain") {
-                                domainId = d.id;
-                            } else {
-                                categoryId = d.id;
-                            }
-                            loadData(d.id);
-                            drawGraph();
-                        });
-                 });
-           });
+    var p1Buttons = drawP1List(data);
+    p1Buttons.on("mouseover", function() {
+                 d3.select(this)
+                   .append("title")
+                   .text("Click to explore it.");
+                 d3.select(this).select("text")
+                   .attr("font-weight", "bold");
+             })
+             .on("mouseout", function() {
+                 d3.select(this).select("title").remove();
+                 d3.select(this).select("text")
+                   .attr("font-weight", null);
+             })
+             .on("click", function(d) {
+                 d3.select(this).select("rect")
+                   .transition()
+                   .duration(500)
+                   .attr("class", "centralBubble")
+                   .attr("x", nextScreenX + bubbleCenter[0]-centralBubbleRadius)
+                   .attr("y", bubbleCenter[1]-centralBubbleRadius)
+                   .attr("width", 2*centralBubbleRadius)
+                   .attr("height", 2*centralBubbleRadius)
+                   .attr("rx", centralBubbleRadius)
+                   .attr("ry", centralBubbleRadius)
+                   .each("end", function() {
+                       svg.select("#canvas")
+                          .transition()
+                          .duration(1000)
+                          .attr("transform", function() {
+                              return d3.svg.transform().translate([-nextScreenX,0])();
+                          })
+                          .each("end", function() {
+                              if (viewType == "domain") {
+                                  domainId = d.id;
+                              } else {
+                                  categoryId = d.id;
+                              }
+                              loadData(d.id);
+                              drawGraph();
+                          });
+                   });
+             });
 }
 
 function drawP1List(data) {
@@ -578,37 +595,36 @@ function drawP1List(data) {
                                             "y":y+p1ListItemDimentions[1]*0.5}}});
     }
     
-    var p1Items = p1List.selectAll("g")
-                        .data(p1ListData)
-                        .enter()
-                        .append("g")
-                        .attr("class", "p1Item");
-    p1Items.append("rect")
-           .attr("x", p1ListLeft)
-           .attr("y", function(d) {
-               return d.y;
-           })
-           .attr("rx", 5)
-           .attr("ry", 5)
-           .attr("width", p1ListItemDimentions[0])
-           .attr("height", p1ListItemDimentions[1])
-           .attr("fill", "gray")
-           .attr("opacity", 0.15);
-    p1Items.append("text")
-           .attr("x", p1ListLeft + p1ListItemDimentions[0] * 0.1)
-           .attr("y", function(d) {
-               return d.y+15;
-           })
-           .text(function(d) {
-               return d.label;
-           });
-    p1Items.append("path")
-           .attr("class", "link")
-           .attr("d", function(d) {
-               return diagonal(d.link);
-           });
+    var p1Buttons = p1List.selectAll("g")
+                          .data(p1ListData)
+                          .enter()
+                          .append("g")
+                          .attr("class", "p1Button");
+    p1Buttons.append("rect")
+             .attr("x", p1ListLeft)
+             .attr("y", function(d) {
+                 return d.y;
+             })
+             .attr("rx", 5)
+             .attr("ry", 5)
+             .attr("width", p1ListItemDimentions[0])
+             .attr("height", p1ListItemDimentions[1])
+             .attr("opacity", 0.15);
+    p1Buttons.append("text")
+             .attr("x", p1ListLeft + p1ListItemDimentions[0] * 0.1)
+             .attr("y", function(d) {
+                 return d.y+15;
+             })
+             .text(function(d) {
+                 return d.label;
+             });
+    p1Buttons.append("path")
+             .attr("class", "link")
+             .attr("d", function(d) {
+                 return diagonal(d.link);
+             });
     
-    return p1Items;
+    return p1Buttons;
 }
 
 function drawBubbles() {
@@ -691,14 +707,6 @@ function drawGraph() {
     svg.select("#canvas").remove();
     var canvas = svg.append("g")
                     .attr("id", "canvas");
-    // Draw the central bubble and the tip
-    canvas.append("circle")
-          .attr("class", "centralBubble")
-          .attr("cx", bubbleCenter[0])
-          .attr("cy", bubbleCenter[1])
-          .attr("r", centralBubbleRadius)
-          .append("title")
-          .text(label);
     // Bubble events
     computeBubblePositions();
     svg.select("#canvas")
@@ -727,17 +735,17 @@ function drawGraph() {
                        // Show the trackers' box.
                        drawTrackersBox(data);
                        thisBubble.attr("visibility", "hidden")
-                                    .attr("pointer-events", "none");
+                                 .attr("pointer-events", "none");
                        svg.select("#trackersBox")
-                             .append("line")
-                             .attr("class", "link")
-                             .attr("x1", bubbleCenter[0])
-                             .attr("y1", bubbleCenter[1])
-                             .attr("x2", data.x+data.r)
-                             .attr("y2", data.y);
+                          .append("line")
+                          .attr("class", "link")
+                          .attr("x1", bubbleCenter[0])
+                          .attr("y1", bubbleCenter[1])
+                          .attr("x2", data.x+data.r)
+                          .attr("y2", data.y);
                        svg.select("#trackersBox line")
                           .transition()
-                             .attr("x2", data.x-data.r);
+                          .attr("x2", data.x-data.r);
                        svg.selectAll("#trackersBox path.link")
                           .transition()
                           .attr("d", function(d) {
@@ -750,6 +758,7 @@ function drawGraph() {
                    removeRightPart();
                } else {
                    // Shrink a bubble
+                   skipedCategoryIdDict[data.id] = true;
                    data.shrink = bubbleData[data.index].shrink = true;
                    data.R = smallRadius;
                    data.r = shrinkRadius;
@@ -760,6 +769,7 @@ function drawGraph() {
                }
            } else {
                // Expand a bubble
+               skipedCategoryIdDict[data.id] = false;
                data.shrink = bubbleData[data.index].shrink = false;
                data.R = bigRadius;
                data.r = data.r;
@@ -801,13 +811,31 @@ function drawGraph() {
            d3.select("#closeButton").remove();
            d3.select("#categoryTooltip").remove();
        });
+    // Draw the central bubble
+    canvas.append("circle")
+          .attr("class", "centralBubble")
+          .attr("cx", bubbleCenter[0])
+          .attr("cy", bubbleCenter[1])
+          .attr("r", centralBubbleRadius)
+          .append("title")
+          .text(label);
     // Initial the bubbles
     svg.selectAll(".catgoryBubble")
        .append("circle")
+       .attr("class", "bubbleSurface")
        .attr("cx", bubbleCenter[0])
        .attr("cy", bubbleCenter[1])
        .attr("r", centralBubbleRadius)
        .attr("fill", function(d, i) {
+           return colors(i);
+       });
+    svg.selectAll(".catgoryBubble")
+       .append("circle")
+       .attr("class", "bubbleEdge")
+       .attr("cx", bubbleCenter[0])
+       .attr("cy", bubbleCenter[1])
+       .attr("r", centralBubbleRadius)
+       .attr("stroke", function(d, i) {
            return colors(i);
        });
     svg.selectAll(".catgoryBubble")

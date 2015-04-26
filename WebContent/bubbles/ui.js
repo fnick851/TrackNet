@@ -2,6 +2,7 @@ domainId = 1004;
 categoryId = 19;
 d3.json("data/851.adjacency.json", function(error, data) {
     completeData = data;
+    init("#tabs");
     
     $("#tabs").tabs({
         activate: function(event, ui) {
@@ -41,19 +42,12 @@ d3.json("data/851.adjacency.json", function(error, data) {
             drawGraph();
         }
     });
-
-    svg = d3.select("#tabs")
-            .append("svg")
-            .attr("width", 1500)
-            .attr("height", 550);
-    viewType = "domain";
-    loadData(domainId);
-    drawGraph();
+    
     svg.append("rect")
        .attr("width", 5)
        .attr("height", 5);
     svg.append("rect")
-       .attr("y", 545)
+       .attr("y", 515)
        .attr("width", 5)
        .attr("height", 5);
 });

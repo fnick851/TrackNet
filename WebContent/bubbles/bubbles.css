@@ -3,28 +3,31 @@ text {
   pointer-events: none;
   /*letter-spacing: 0.05em;*/
 }
-.viewButton rect {
-  opacity: 0.7;
-}
 .centralBubble {
-  fill: gray;
   opacity: 1;
+}
+.centralBubble,
+.p1Button rect {
+  fill: gray;
+  stroke: black;
 }
 .catgoryBubble text {
   text-anchor: middle;
   fill: white;
 }
-.catgoryBubble circle {
+.bubbleSurface {
   opacity: 0.7;
 }
+.bubbleEdge {
+  fill: none;
+}
 .trackerButton,
-.p1Item {
+.p1Button {
   font-size: 12px;
 }
-.viewButton,
 .catgoryBubble,
 .trackerButton,
-.p1Item {
+.p1Button {
   cursor: pointer;
 }
 .link {
