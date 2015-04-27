@@ -44,10 +44,10 @@ d3.json("data/851.adjacency.json", function(error, data) {
     });
     
     svg.append("rect")
-       .attr("width", 5)
-       .attr("height", 5);
+       .attr("width", 1)
+       .attr("height", 1);
     svg.append("rect")
-       .attr("y", 515)
-       .attr("width", 5)
-       .attr("height", 5);
+       .attr("y", 519)
+       .attr("width", 1)
+       .attr("height", 1);
 });

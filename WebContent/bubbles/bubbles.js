@@ -10,12 +10,12 @@ var skipedCategoryIdDict = {};
 var p1Info;
 var bubbleData;
 var bubbleCenter = [260,260];
-var centralBubbleRadius = 30;
+var centralBubbleRadius = 35;
 var bigRadius = 120;
-var smallRadius = 60;
+var smallRadius = 65;
 var bubbleSizeRange = [60, 20];
 var bubbleVisibleCapacity = 15;
-var shrinkRadius = 20;
+var shrinkRadius = 16;
 var rightMostAngle = 0;
 
 var boxTopLeft = [550,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
@@ -26,7 +26,7 @@ var trackerItemHeight = 22;
 var showingTreemap = false;
 
 var p1ListTopLeft = [850,boxTopLeft[1]];
-var p1ListItemDimentions = [180,trackerItemHeight];
+var p1ListItemDimentions = [190,trackerItemHeight];
 var p1ListVisibleCapacity = boxVisibleCapacity;
 
 var nextScreenX = 1000;
@@ -250,15 +250,15 @@ function resumeTrackersBox() {
     svg.selectAll(".trackerButton")
        .attr("visibility", null);
     svg.select("#trackersBox rect")
-          .transition()
-          .attr("width", boxDimentions[0])
-          .attr("height", boxDimentions[1])
-          .attr("rx", 30)
-          .attr("ry", 30);
+       .transition()
+       .attr("width", boxDimentions[0])
+       .attr("height", boxDimentions[1])
+       .attr("rx", 30)
+       .attr("ry", 30);
     svg.select("#trackersBox #down")
        .attr("visibility", "hidden");
     svg.select("#trackersBox #right")
-      .attr("visibility", null);
+       .attr("visibility", null);
 }
 
 function drawTreemap(token) {
@@ -275,8 +275,8 @@ function drawTreemap(token) {
          .transition()
          .duration(1000)
          .attr("transform", function(d) {
-             return d3.svg.transform()
-                       .translate([trackerItemTopLeft[0]+d.x,trackerItemTopLeft[1]+d.y])();
+        	 return d3.svg.transform()
+        	          .translate([trackerItemTopLeft[0]+d.x,trackerItemTopLeft[1]+d.y])();
          });
     token.select("g rect")
          .transition()
@@ -312,9 +312,9 @@ function drawTrackersBox(data) {
                   .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
                   .attr("fill", colors(data.index))
                   .attr("transform", function(d) {
-                      return d3.svg.transform()
-                                 .translate([boxDimentions[0]*0.81,16])
-                                 .rotate(270)();
+                	  return d3.svg.transform()
+                               .translate([boxDimentions[0]*0.81,16])
+                               .rotate(270)();
                   })
                   .style("pointer-events", "none")
                   .attr("opacity", 0.8)
@@ -377,6 +377,7 @@ function drawTrackersBox(data) {
     var triRight = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.78,boxTopLeft[1]+navOffset],
                                 "right", data.index, null);
     triRight.on("click", function() {
+        trackerButtons.attr("class", "trackerButtonTreemap");
         svg.select("#trackersBox rect")
            .transition()
            .attr("width", boxDimentions[2]);
@@ -389,11 +390,10 @@ function drawTrackersBox(data) {
         var triLeft2 = drawTriangle([boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
                                     "left", data.index, null);
         triLeft2.on("click", function() {
+            trackerButtons.attr("class", "trackerButton");
             svg.select("#trackersBox text")
                .transition()
-               .attr("x", boxTopLeft[0]+boxDimentions[0]/2)
-            svg.selectAll(".trackerButtonGroup polygon")
-               .attr("visibility", null);
+               .attr("x", boxTopLeft[0]+boxDimentions[0]/2);
             triRight.attr("visibility", null);
             triLeft2.remove();
             svg.selectAll(".trackerButtonGroup")
@@ -416,6 +416,8 @@ function drawTrackersBox(data) {
                .text(function(d) {
                    return d.domain;
                });
+            svg.selectAll(".trackerButtonGroup polygon")
+               .attr("visibility", null);
             resumeTrackersBox();
             showingTreemap = false;
         });
@@ -463,7 +465,7 @@ function drawTrackersList(className, data) {
                       "rectY":y,
                       "link":{"source":source,
                              "target":{"x":boxTopLeft[0]+boxDimentions[0]*0.05,
-                                        "y":y+trackerItemHeight*0.5}}});
+                                       "y":y+trackerItemHeight*0.5}}});
     }
     
     var trackerButtons = token.selectAll("g")
@@ -474,8 +476,8 @@ function drawTrackersList(className, data) {
     var trackerButtonsGroups = trackerButtons.append("g")
                               .attr("class", "trackerButtonGroup")
                               .attr("transform", function(d) {
-                                  return d3.svg.transform()
-                                             .translate([trackerItemTopLeft[0],d.rectY])();
+                            	  return d3.svg.transform()
+                                           .translate([trackerItemTopLeft[0],d.rectY])();
                               });
     trackerButtonsGroups.append("rect")
                         .attr("rx", 5)
@@ -592,7 +594,7 @@ function drawP1List(data) {
                          "y":y,
                          "link":{"source":source,
                                  "target":{"x":p1ListLeft,
-                                            "y":y+p1ListItemDimentions[1]*0.5}}});
+                                           "y":y+p1ListItemDimentions[1]*0.5}}});
     }
     
     var p1Buttons = p1List.selectAll("g")
@@ -611,7 +613,7 @@ function drawP1List(data) {
              .attr("height", p1ListItemDimentions[1])
              .attr("opacity", 0.15);
     p1Buttons.append("text")
-             .attr("x", p1ListLeft + p1ListItemDimentions[0] * 0.1)
+             .attr("x", p1ListLeft + p1ListItemDimentions[0] * 0.05)
              .attr("y", function(d) {
                  return d.y+15;
              })
@@ -762,6 +764,7 @@ function drawGraph() {
                    data.shrink = bubbleData[data.index].shrink = true;
                    data.R = smallRadius;
                    data.r = shrinkRadius;
+                   d3.select(this).append("title").text(data.category);
                    shrinkTransition(d3.select(this), data);
                    d3.select("#closeButton").remove();
                    d3.select("#categoryTooltip").remove();
@@ -773,6 +776,7 @@ function drawGraph() {
                data.shrink = bubbleData[data.index].shrink = false;
                data.R = bigRadius;
                data.r = data.r;
+               d3.select(this).select("title").remove();
                shrinkTransition(d3.select(this), data);
                removeRightPart();
            }
