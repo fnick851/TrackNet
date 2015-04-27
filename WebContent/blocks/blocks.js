@@ -7,7 +7,7 @@ function runMain() {
 		categories = json;
 	});
 	
-	d3.json("visualization-data-anon-2/257.data.json", function(error, json) {
+	d3.json("257.data.json", function(error, json) {
 	  if (error) return alert("Error loading data: " + error);
 	  td = json;
 	  visualizeit();
@@ -87,13 +87,13 @@ function getHeightForCat(step, category, categoryList) {
 	return h;
 }
 
-var width=5;
+var width=1;
 var height=20;
 var offset=150; // left margin for labels
 var x=offset;
-var trackedColor = "#CC5";
-var cookieColor = "#C65";
-var untrackedColor = "#6C5";
+var trackedColor = "#777";//"#CC5";
+var cookieColor = "#333";
+var untrackedColor = "#DDD";
 var unknownColor = "#56C";
 function visualizeit() {
 	var firstparty = td["first_party"];
