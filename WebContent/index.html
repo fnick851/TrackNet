@@ -1,26 +1,41 @@
 <!DOCTYPE html>
-<!-- saved from url=(0038)https://developer.similarweb.com/tools -->
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>TrackNet</title>
-  <link rel="stylesheet" type="text/css" href="./includes/style_responsive.css">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>TrackNet</title>
 
+    <link rel="stylesheet" type="text/css" href="./includes/style_responsive.css">
+    <link rel="stylesheet" type="text/css" href="includes/style.css">
+
+    <script type="text/javascript" src="includes/jquery-1.11.2.js"></script>
+    <script type="text/javascript" src="includes/jquery.autocomplete.js"></script>
+    <script type="text/javascript" src="includes/autocomplete.js"></script>
+</head>
 <body>
-  <div id="olark" style="display: none;"><olark><iframe frameborder="0" id="olark-loader"></iframe></olark></div>
 	<div id="container">
 		<div id="wrapper">			
 			<div id="content">
-        <div class="section1 large-header" id="large-header">
-          <canvas id="demo-canvas" width="1349" height="554"></canvas>
-					
-				</div>
-    </div>
-  </div>
-</div> 
+                <div class="section large-header" id="large-header">
+                    <canvas id="demo-canvas" width="1366" height="100"></canvas>
+                    <img src="./includes/TrackNet-Logo.png" id="logo"/>
+                    <div id="category_selector">
+                        <div>
+                            <form>
+                                <div id="searchfield">
+                                    <input type="text" name="first-party" id="autocomplete" placeholder="Search first-party sites" onclick="$('#autocomplete').autocomplete('search', '');">
+                                    <!--<button>Bubble View</button>
+                                    <button>Block View</button>-->
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+			    </div>
+            </div>
+        </div>
+    </div> 
 
-  <script type="text/javascript" src="./includes/jquery-1.8.2.min.js"></script>
 
   <!--NEEDED--><script type="text/javascript" src="./includes/cursor-tweenlite.js"></script>
   <!--NEEDED--><script type="text/javascript" src="./includes/cursor-ease.js"></script>
   <!--NEEDED--><script type="text/javascript" src="./includes/cursor-effect.js"></script>
+</body>
