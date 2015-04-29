@@ -7,6 +7,11 @@ var domainId;
 var categoryId;
 var skipedCategoryIdDict = {};
 
+var domainUndoList = [];
+var domainRedoList = [];
+var categoryUndoList = [];
+var categoryRedoList = [];
+
 var p1Info;
 var bubbleData;
 var bubbleCenter = [260,260];
@@ -38,10 +43,78 @@ function init(selector) {
             .attr("height", 520);
     viewType = "domain";
     loadData(domainId);
+    drawTimeline();
     drawGraph();
     for (var cid in completeData.catList) {
         skipedCategoryIdDict[cid] = false;
     }
+}
+
+function drawTimeline() {
+    var timeline = svg.append("g")
+                      .attr("id", "timeline");
+    
+    var undo = drawTriangle("#timeline", [10,0], "left", "black", "inactive");
+    undo.on("click", function() {
+            if (undo.attr("status") == "active") {
+                if (viewType == "domain") {
+                    domainRedoList.push(domainId);
+                    domainId = domainUndoList.pop();
+                    loadData(domainId);
+                } else {
+                    categoryRedoList.push(categoryId);
+                    categoryId = categoryUndoList.pop();
+                    loadData(categoryId);
+                }
+                svg.select("#canvas")
+                   .transition()
+                   .duration(1000)
+                   .attr("transform", function() {
+                       return d3.svg.transform().translate([nextScreenX,0])();
+                   })
+                   .each("end", function() {
+                       drawGraph();
+                   });
+            }
+        })
+        .append("title")
+        .text("Show previuos view.");
+    timeline.append("text")
+            .attr("id", "undo")
+            .attr("x", 25)
+            .attr("y", 14)
+            .style("text-anchor", "start");
+    
+    var redo = drawTriangle("#timeline", [nextScreenX+bubbleCenter[0],0], "right", "black", "inactive");
+    redo.on("click", function() {
+            if (redo.attr("status") == "active") {
+                if (viewType == "domain") {
+                    domainUndoList.push(domainId);
+                    domainId = domainRedoList.pop();
+                    loadData(domainId);
+                } else {
+                    categoryUndoList.push(categoryId);
+                    categoryId = categoryRedoList.pop();
+                    loadData(categoryId);
+                }
+                svg.select("#canvas")
+                   .transition()
+                   .duration(1000)
+                   .attr("transform", function() {
+                       return d3.svg.transform().translate([-nextScreenX,0])();
+                   })
+                   .each("end", function() {
+                       drawGraph();
+                   });
+            }
+        })
+        .append("title")
+        .text("Show next view.");
+    timeline.append("text")
+            .attr("id", "redo")
+            .attr("x", nextScreenX+bubbleCenter[0]-15)
+            .attr("y", 14)
+            .style("text-anchor", "end");
 }
 
 function loadData(id) {
@@ -169,7 +242,7 @@ function reDrawBubbles() {
     return drawBubbles();
 }
 
-function drawTriangle(offset, orientation, index, visibility) {
+function drawTriangle(selector, offset, orientation, color, status) {
     var dim = 20;
     var rotate;
     switch (orientation) {
@@ -194,12 +267,13 @@ function drawTriangle(offset, orientation, index, visibility) {
     var transform = d3.svg.transform()
                       .translate(offset)
                       .rotate(rotate);
-    return d3.select("#trackersBox")
+    return d3.select(selector)
              .append("polygon")
+             .attr("class", "triangleButton")
              .attr("id", orientation)
              .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
-             .attr("fill", colors(index))
-             .attr("visibility", visibility)
+             .attr("fill", color)
+             .attr("status", status)
              .attr("transform", transform)
              .on("mouseover", function() {
                  d3.select(this).attr("opacity", 0.2);
@@ -256,9 +330,9 @@ function resumeTrackersBox() {
        .attr("rx", 30)
        .attr("ry", 30);
     svg.select("#trackersBox #down")
-       .attr("visibility", "hidden");
+       .attr("status", "inactive");
     svg.select("#trackersBox #right")
-       .attr("visibility", null);
+       .attr("status", "active");
 }
 
 function drawTreemap(token) {
@@ -347,9 +421,9 @@ function drawTrackersBox(data) {
                            svg.selectAll(".trackerButton:not([status=on])")
                               .attr("visibility", "hidden");
                            svg.select("#trackersBox #down")
-                              .attr("visibility", null);
+                              .attr("status", "active");
                            svg.select("#trackersBox #right")
-                              .attr("visibility", "hidden");
+                              .attr("status", "inactive");
                            svg.select("#trackersBox rect")
                                  .transition()
                                  .attr("height", 65)
@@ -364,23 +438,27 @@ function drawTrackersBox(data) {
                    });
     
     var navOffset = 10;
-    var triLeft = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.22,boxTopLeft[1]+navOffset], 
-                               "left", data.index, null);
+    var triLeft = drawTriangle("#trackersBox", [boxTopLeft[0]+boxDimentions[0]*0.22,boxTopLeft[1]+navOffset], 
+                               "left", colors(data.index), "active");
     triLeft.on("click", function() {
                removeRightPart();
            })
            .append("title")
            .text("Close the trackers' list.");
-    var triDown = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.5,boxTopLeft[1]+navOffset], 
-                               "down", data.index, "hidden");
+    var triDown = drawTriangle("#trackersBox", [boxTopLeft[0]+boxDimentions[0]*0.5,boxTopLeft[1]+navOffset], 
+                               "down", colors(data.index), "inactive");
     triDown.on("click", function() {
-               resumeTrackersBox();
+               if (triDown.attr("status") == "active") {
+                   resumeTrackersBox();
+               }
            })
            .append("title")
-           .text("Show the trackers' list..");
-    var triRight = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.78,boxTopLeft[1]+navOffset],
-                                "right", data.index, null);
+           .text("Show the trackers' list.");
+    var triRight = drawTriangle("#trackersBox", [boxTopLeft[0]+boxDimentions[0]*0.78,boxTopLeft[1]+navOffset],
+                                "right", colors(data.index), "active");
     triRight.on("click", function() {
+                if (triRight.attr("status") == "inactive")
+                    return;
                 trackerButtons.attr("class", "trackerButtonTreemap");
                 svg.select("#trackersBox rect")
                    .transition()
@@ -390,15 +468,16 @@ function drawTrackersBox(data) {
                    .attr("x", boxTopLeft[0]+boxDimentions[2]/2)
                 svg.selectAll(".trackerButtonGroup polygon")
                    .attr("visibility", "hidden");
-                triRight.attr("visibility", "hidden");
-                var triLeft2 = drawTriangle([boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
-                                            "left", data.index, null);
+                triRight.attr("status", "inactive");
+                var triLeft2 = drawTriangle("#trackersBox",
+                                            [boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
+                                            "left", colors(data.index), "active");
                 triLeft2.on("click", function() {
                             trackerButtons.attr("class", "trackerButton");
                             svg.select("#trackersBox text")
                                .transition()
                                .attr("x", boxTopLeft[0]+boxDimentions[0]/2);
-                            triRight.attr("visibility", null);
+                            triRight.attr("status", "active");
                             triLeft2.remove();
                             svg.selectAll(".trackerButtonGroup")
                                .transition()
@@ -552,8 +631,10 @@ function drawP1Box(data) {
                           })
                           .each("end", function() {
                               if (viewType == "domain") {
+                                  domainUndoList.push(domainId);
                                   domainId = d.id;
                               } else {
+                                  categoryUndoList.push(categoryId);
                                   categoryId = d.id;
                               }
                               loadData(d.id);
@@ -710,9 +791,34 @@ function removeRightPart() {
 }
 
 function drawGraph() {
-    var label = viewType == "domain" 
-                ? completeData.domainList[domainId]
-                : completeData.catList[categoryId];
+    var label;
+    var undoLength;
+    var redoLength;
+    if (viewType == "domain") {
+        label = completeData.domainList[domainId];
+        undoLength = domainUndoList.length;
+        redoLength = domainRedoList.length;
+        undoLabel = completeData.domainList[domainUndoList[undoLength-1]];
+        redoLabel = completeData.domainList[domainRedoList[redoLength-1]];
+    } else {
+        label = completeData.catList[categoryId];
+        undoLength = categoryUndoList.length;
+        redoLength = categoryRedoList.length;
+        undoLabel = completeData.catList[categoryUndoList[undoLength-1]];
+        redoLabel = completeData.catList[categoryRedoList[redoLength-1]];
+    }
+    svg.select("#timeline #undo").text(undoLabel);
+    svg.select("#timeline #redo").text(redoLabel);
+    if (undoLength == 0) {
+        svg.select("#timeline #left").attr("status", "inactive");
+    } else {
+        svg.select("#timeline #left").attr("status", "active");
+    }
+    if (redoLength == 0) {
+        svg.select("#timeline #right").attr("status", "inactive");
+    } else {
+        svg.select("#timeline #right").attr("status", "active");
+    }
     $("#current-"+viewType).text(label);
     svg.select("#canvas").remove();
     var canvas = svg.append("g")

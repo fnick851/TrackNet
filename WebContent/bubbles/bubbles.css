@@ -1,40 +1,46 @@
 text {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  pointer-events: none;
-  /*letter-spacing: 0.05em;*/
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    pointer-events: none;
+    /*letter-spacing: 0.05em;*/
 }
 .centralBubble {
-  opacity: 1;
+    opacity: 1;
 }
 .centralBubble,
 .p1Button rect {
-  fill: gray;
-  stroke: black;
+    fill: gray;
+    stroke: black;
 }
 .catgoryBubble text {
-  text-anchor: middle;
-  fill: white;
+    text-anchor: middle;
+    fill: white;
 }
 .bubbleSurface {
-  opacity: 0.7;
+    opacity: 0.7;
 }
 .bubbleEdge {
-  fill: none;
+    fill: none;
 }
+#timeline,
 .trackerButton,
 .trackerButtonTreemap,
 .p1Button {
-  font-size: 12px;
+    font-size: 12px;
 }
+.triangleButton,
 .catgoryBubble,
 .trackerButton,
 .p1Button {
-  cursor: pointer;
+    cursor: pointer;
+}
+.triangleButton[status=inactive]{
+    cursor: auto;
+    opacity: 0.1;
 }
 .link {
-  fill: none;
-  stroke: gray;
-  stroke-width: 2px;
-  opacity: 0.6;
-  pointer-events: none;
+    fill: none;
+    stroke: gray;
+    stroke-width: 2px;
+    opacity: 0.6;
+    pointer-events: none;
 }
