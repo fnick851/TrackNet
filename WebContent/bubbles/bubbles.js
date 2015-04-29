@@ -275,8 +275,8 @@ function drawTreemap(token) {
          .transition()
          .duration(1000)
          .attr("transform", function(d) {
-        	 return d3.svg.transform()
-        	          .translate([trackerItemTopLeft[0]+d.x,trackerItemTopLeft[1]+d.y])();
+             return d3.svg.transform()
+                      .translate([trackerItemTopLeft[0]+d.x,trackerItemTopLeft[1]+d.y])();
          });
     token.select("g rect")
          .transition()
@@ -312,7 +312,7 @@ function drawTrackersBox(data) {
                   .attr("points", "0,0 "+dim+",0 "+dim/2+","+dim)
                   .attr("fill", colors(data.index))
                   .attr("transform", function(d) {
-                	  return d3.svg.transform()
+                      return d3.svg.transform()
                                .translate([boxDimentions[0]*0.81,16])
                                .rotate(270)();
                   })
@@ -367,63 +367,71 @@ function drawTrackersBox(data) {
     var triLeft = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.22,boxTopLeft[1]+navOffset], 
                                "left", data.index, null);
     triLeft.on("click", function() {
-        removeRightPart();
-    });
+               removeRightPart();
+           })
+           .append("title")
+           .text("Close the trackers' list.");
     var triDown = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.5,boxTopLeft[1]+navOffset], 
                                "down", data.index, "hidden");
     triDown.on("click", function() {
-        resumeTrackersBox();
-    });
+               resumeTrackersBox();
+           })
+           .append("title")
+           .text("Show the trackers' list..");
     var triRight = drawTriangle([boxTopLeft[0]+boxDimentions[0]*0.78,boxTopLeft[1]+navOffset],
                                 "right", data.index, null);
     triRight.on("click", function() {
-        trackerButtons.attr("class", "trackerButtonTreemap");
-        svg.select("#trackersBox rect")
-           .transition()
-           .attr("width", boxDimentions[2]);
-        svg.select("#trackersBox text")
-           .transition()
-           .attr("x", boxTopLeft[0]+boxDimentions[2]/2)
-        svg.selectAll(".trackerButtonGroup polygon")
-           .attr("visibility", "hidden");
-        triRight.attr("visibility", "hidden");
-        var triLeft2 = drawTriangle([boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
-                                    "left", data.index, null);
-        triLeft2.on("click", function() {
-            trackerButtons.attr("class", "trackerButton");
-            svg.select("#trackersBox text")
-               .transition()
-               .attr("x", boxTopLeft[0]+boxDimentions[0]/2);
-            triRight.attr("visibility", null);
-            triLeft2.remove();
-            svg.selectAll(".trackerButtonGroup")
-               .transition()
-               .attr("transform", function(d) {
-                   return d3.svg.transform().translate([trackerItemTopLeft[0],d.rectY])();
-               });
-            svg.selectAll(".trackerButtonGroup rect")
-               .transition()
-               .attr("width", boxDimentions[0] * 0.9)
-               .attr("height", trackerItemHeight);
-            svg.selectAll(".trackerButtonGroup text")
-               .attr("visibility", null);
-            svg.selectAll(".trackerButtonGroup text.size")
-               .attr("x", boxDimentions[0] * 0.78)
-               .attr("y", 15)
-               .style("text-anchor", "end");
-            svg.selectAll(".trackerButtonGroup text.label")
-               .attr("x", boxDimentions[0] * 0.05)
-               .text(function(d) {
-                   return d.domain;
-               });
-            svg.selectAll(".trackerButtonGroup polygon")
-               .attr("visibility", null);
-            resumeTrackersBox();
-            showingTreemap = false;
-        });
-        drawTreemap(trackerButtons);
-        showingTreemap = true;
-    });
+                trackerButtons.attr("class", "trackerButtonTreemap");
+                svg.select("#trackersBox rect")
+                   .transition()
+                   .attr("width", boxDimentions[2]);
+                svg.select("#trackersBox text")
+                   .transition()
+                   .attr("x", boxTopLeft[0]+boxDimentions[2]/2)
+                svg.selectAll(".trackerButtonGroup polygon")
+                   .attr("visibility", "hidden");
+                triRight.attr("visibility", "hidden");
+                var triLeft2 = drawTriangle([boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
+                                            "left", data.index, null);
+                triLeft2.on("click", function() {
+                            trackerButtons.attr("class", "trackerButton");
+                            svg.select("#trackersBox text")
+                               .transition()
+                               .attr("x", boxTopLeft[0]+boxDimentions[0]/2);
+                            triRight.attr("visibility", null);
+                            triLeft2.remove();
+                            svg.selectAll(".trackerButtonGroup")
+                               .transition()
+                               .attr("transform", function(d) {
+                                   return d3.svg.transform().translate([trackerItemTopLeft[0],d.rectY])();
+                               });
+                            svg.selectAll(".trackerButtonGroup rect")
+                               .transition()
+                               .attr("width", boxDimentions[0] * 0.9)
+                               .attr("height", trackerItemHeight);
+                            svg.selectAll(".trackerButtonGroup text")
+                               .attr("visibility", null);
+                            svg.selectAll(".trackerButtonGroup text.size")
+                               .attr("x", boxDimentions[0] * 0.78)
+                               .attr("y", 15)
+                               .style("text-anchor", "end");
+                            svg.selectAll(".trackerButtonGroup text.label")
+                               .attr("x", boxDimentions[0] * 0.05)
+                               .text(function(d) {
+                                   return d.domain;
+                               });
+                            svg.selectAll(".trackerButtonGroup polygon")
+                               .attr("visibility", null);
+                            resumeTrackersBox();
+                            showingTreemap = false;
+                        })
+                        .append("title")
+                        .text("Close the treemap.");
+                drawTreemap(trackerButtons);
+                showingTreemap = true;
+            })
+            .append("title")
+            .text("Show the treemap.");
 }
 
 var diagonal = d3.svg.diagonal()
@@ -476,7 +484,7 @@ function drawTrackersList(className, data) {
     var trackerButtonsGroups = trackerButtons.append("g")
                               .attr("class", "trackerButtonGroup")
                               .attr("transform", function(d) {
-                            	  return d3.svg.transform()
+                                  return d3.svg.transform()
                                            .translate([trackerItemTopLeft[0],d.rectY])();
                               });
     trackerButtonsGroups.append("rect")
@@ -567,7 +575,7 @@ function drawP1List(data) {
           .attr("y", p1ListTopLeft[1]+30)
           .attr("fill", "gray")
           .style("text-anchor", "middle")
-          .text((viewType == "domain" ? "Domains" : "Categories") + " tracked by");
+          .text((viewType == "domain" ? "Websites" : "Categories") + " tracked by");
     p1List.append("text")
           .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
           .attr("y", p1ListTopLeft[1]+55)
