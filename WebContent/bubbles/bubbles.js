@@ -540,17 +540,18 @@ function drawTrackersList(className, data) {
     
     var source = {"x":data.x+data.r,"y":data.y};
     var boxData = [];
+    var listType = viewType == "domain" ? "domainList" : "catList";
     for (var i = 0; i < boxVisibleCapacity && i < p1Info[data.id].length; i++) {
         var trackerId = p1Info[data.id][i];
         var y = trackerItemTopLeft[1]+trackerItemHeight*i;
         boxData.push({"index":i,
                       "id":trackerId,
                       "domain":completeData.domainList[trackerId],
-                      "p1Length":completeData.thirdPartyDomains[trackerId].domainList.length-1,
+                      "p1Length":completeData.thirdPartyDomains[trackerId][listType].length-1,
                       "rectY":y,
                       "link":{"source":source,
-                             "target":{"x":boxTopLeft[0]+boxDimentions[0]*0.05,
-                                       "y":y+trackerItemHeight*0.5}}});
+                              "target":{"x":boxTopLeft[0]+boxDimentions[0]*0.05,
+                                        "y":y+trackerItemHeight*0.5}}});
     }
     
     var trackerButtons = token.selectAll("g")
