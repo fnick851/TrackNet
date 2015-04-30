@@ -17,9 +17,10 @@
 	<body onload="runMain()">
 		<div id="category_selector">
 			<div id="tabs">
+				<span>Sort By:</span>
 				<ul>
-					<li><a href="#domain">Website</a></li>
-					<li><a href="#category">Category</a></li>
+					<li><a href="#" onclick="websiteView()" id="webview" class="selected">Website</a></li>
+					<li><a href="#" onclick="categoryView()" id="categoryview">Category</a></li>
 				</ul>
 			</div>
 			<div id="searchfield">

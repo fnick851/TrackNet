@@ -1,25 +1,38 @@
-// note: need --allow-file-access-from-files to run in chrome from file
-var td;
-var categories;
-var width=3;
-var height=20; // active_category div height
-var padding=16; // pixels between rows
-var initheight=40; // search form height
-var offset=5; // left margin for labels
-var x=offset;
+// display variables
+var width=3;		// width of each block
+var height=17; 		// active_category div height
+var padding=16; 	// pixels between rows
+var initheight=40; 	// search form height
+var offset=5; 		// left margin for labels
 var trackedColor = 0.75;
 var cookieColor = 0.6;
 var untrackedColor = 1.0;
-var firstparty, thirdparty;
-
 var colors = d3.scale.category10();
-var selectedBlock = null;
 
+// global vars
+var selectedBlock = null;
+var td;
+var firstparty, thirdparty;
+var categories;
+var x;
 var active_categories;
 var other_categories;
 
+function websiteView() {
+	d3.select("#webview").attr("class", "selected");
+	d3.select("#categoryview").attr("class", "");
+	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	loadData();
+}
+
+function categoryView() {
+	d3.select("#webview").attr("class", "");
+	d3.select("#categoryview").attr("class", "selected");
+	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
+	loadData();
+}
+
 function runMain() {
-	// todo: occasionally categories don't load until after the data which causes problems
 	d3.json("domainCategoryDict.json", function(error, json) {
 		if (error) return alert("Error loading categories: " + error);
 		categories = json;
@@ -88,7 +101,6 @@ function initializeCategories() {
 	active_categories = [];
 	other_categories = [];
 	clist = {};
-	// todo switch to datalist so we get only categories for this data set
 	firstparty = td["first_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
@@ -187,14 +199,9 @@ function visualizeit() {
 	firstparty = td["first_party"];
 	thirdparty = td["third_party"];
 	firstparty = addCategoriesToJson(firstparty);
-	//initializeCategories();
 	
-	// todo: control sort type with buttons
-	// sort by category (and by domain within)
-	//firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	// sort by domain
+	// default to sort by domain
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
-	
 	loadData();
 }
 
@@ -255,7 +262,7 @@ function loadData() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
-		.attr('y', function(d) { return y +padding/2 + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('y', function(d) { return y + padding + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
 		.attr('width', width)
 		.attr('height', height)
 		.attr('fill', function(d) { return colors(d.category); })

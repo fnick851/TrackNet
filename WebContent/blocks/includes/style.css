@@ -236,10 +236,16 @@ p {
     box-shadow: 0 0 4px #999;
     height: 22px;
     margin-bottom: 7.5px;
-    transition: background-color 0.35s ease;
+    transition: background-color 0.15s ease;
+	color:#33C;
 }
 
 #tabs .selected
 {
 	background-color: #ccc;
+}
+
+#tabs span {
+	float:left;
+	padding: 2px 2px 1px 20px;
 }
