@@ -1,19 +1,30 @@
-domainId = 1004;
-categoryId = 19;
 d3.json("data/851.adjacency.json", function(error, data) {
     completeData = data;
     init("#tabs");
+    
+    $("#status-domain").hide();
+    $("#status-category").hide();
     
     $("#tabs").tabs({
         activate: function(event, ui) {
             if (ui.newTab.context.innerText == "Website") {
                 viewType = "domain";
-                loadData(domainId);
+                if (domainId >= 0) {
+                    loadData(domainId);
+                    drawGraph();
+                } else {
+                    refreshTimeline();
+                }
+                
             } else if (ui.newTab.context.innerText == "Category") {
                 viewType = "category";
-                loadData(categoryId);
+                if (categoryId >= 0) {
+                    loadData(categoryId);
+                    drawGraph();
+                } else {
+                    refreshTimeline();
+                }
             }
-            drawGraph();
         }
     });
     
@@ -24,7 +35,12 @@ d3.json("data/851.adjacency.json", function(error, data) {
     $("#search-domain").autocomplete({
         source: domains,
         select: function(event, ui) {
+            $("#status-domain").show();
+            $("#callout-domain").hide();
+            if (domainId >= 0)
+                domainUndoList.push(domainId);
             domainId = ui.item.id;
+            domainRedoList = [];
             loadData(domainId);
             drawGraph();
         }
@@ -37,7 +53,12 @@ d3.json("data/851.adjacency.json", function(error, data) {
     $("#search-category").autocomplete({
         source: categories,
         select: function(event, ui) {
+            $("#status-category").show();
+            $("#callout-category").hide();
+            if (categoryId >= 0)
+                categoryUndoList.push(categoryId);
             categoryId = ui.item.id;
+            categoryRedoList = [];
             loadData(categoryId);
             drawGraph();
         }
