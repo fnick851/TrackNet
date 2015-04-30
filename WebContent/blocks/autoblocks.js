@@ -142,7 +142,9 @@ function initializeSearchBox() {
 			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
 			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
-			'<input type="checkbox">' +
+			//'<input type="checkbox">' +
+			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
+			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			'</div>';
 
 		$('#active_categories').append(html);
@@ -157,8 +159,10 @@ function initializeSearchBox() {
 			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
 			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
-			'<input type="checkbox">' +
-		'</div>';
+			'<button class="move_up" onclick="moveUp(this);"></button>' +
+			'<button class="move_down" onclick="moveDown(this);"></button>' +
+			//'<input type="checkbox">' +
+			'</div>';
 
 			$('#active_categories').append(html);
 			document.getElementById('autocomplete').value = '';
