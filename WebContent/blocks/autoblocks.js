@@ -1,21 +1,51 @@
 // note: need --allow-file-access-from-files to run in chrome from file
 var td;
 var categories;
+var width=3;
+var height=26; // active_category div height
+var padding=7; // pixels between rows
+var initheight=40; // search form height
+var offset=150; // left margin for labels
+var x=offset;
+var trackedColor = 0.75;
+var cookieColor = 0.6;
+var untrackedColor = 1.0;
+var firstparty, thirdparty;
+
+var colors = d3.scale.category10();
+var selectedBlock = null;
+
+// todo load automatically
+var active_categories = [
+	{ value: 'Health', data: '30%', enabled: false },
+	{ value: 'Shopping', data: '19%', enabled: false },
+	{ value: 'Search Engines/Portals', data: '12%', enabled: false },
+	{ value: 'Vehicles', data: '8%', enabled: false },
+];
+
+var other_categories = [
+	{ value: 'Financial Services', data: '15%', enabled: false },
+	{ value: 'Technology/Internet', data: '12%', enabled: false },
+	{ value: 'Society/Daily Living', data: '12%', enabled: false },
+	{ value: 'News/Media', data: '8%', enabled: false },
+	{ value: 'Uncategorized', data: '5%', enabled: false },
+];
+
 function runMain() {
 	// load autocomplete box
 	//TODO:
-    //could be changed to get the top 5 categories from other_categories lists, move them to active_categories
-    for(var i = 0; i < active_categories.length; i++)
-    {
-        var html = '<div class="active_category_item">' +
-                '<button class="delete_item" onclick="remove_active_item(this);"></button>' +
-                '<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
-                '<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
-                '<input type="checkbox">' +
-            '</div>';
-            
-            $('#active_categories').append(html);
-    }
+	//could be changed to get the top 5 categories from other_categories lists, move them to active_categories
+	for(var i = 0; i < active_categories.length; i++)
+	{
+		var html = '<div class="active_category_item">' +
+			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
+			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
+			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
+			'<input type="checkbox">' +
+			'</div>';
+
+		$('#active_categories').append(html);
+	}
 
 	d3.json("domainCategoryDict.json", function(error, json) {
 		if (error) return alert("Error loading categories: " + error);
@@ -80,43 +110,26 @@ function addCategoriesToJson(datalist) {
 }
 
 function getCategoryList(datalist) {
-	clist = {};
-	for (i=0;i<datalist.length;i++) {
-		clist[datalist[i].category] = 1;
+	cats = [];
+	for (i=0;i<active_categories.length;i++){
+		cats.push(active_categories[i]["value"]);
 	}
-	clistKeys = [];
-	for (var key in clist) {
-		if (clist.hasOwnProperty(key))
-			clistKeys.push(key);
-	}
-	return clistKeys;
+	return cats;
 }
 
 function getHeightForCat(step, category, categoryList) {
-	h = 0;
+	h = initheight-step+padding;
 	for (i=0;i<categoryList.length;i++) {
 		if (categoryList[i] == category)
 			break;
-		h += step;
+		h += step + padding;
 	}
 	return h;
 }
 
-var width=3;
-var height=20;
-var offset=150; // left margin for labels
-var x=offset;
-var trackedColor = 0.75;
-var cookieColor = 0.6;
-var untrackedColor = 1.0;
-var unknownColor = "#56C";
-
-var colors = d3.scale.category10();
-var selectedBlock = null;
-
 function visualizeit() {
-	var firstparty = td["first_party"];
-	var thirdparty = td["third_party"];
+	firstparty = td["first_party"];
+	thirdparty = td["third_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
 	// todo: control sort type with buttons
@@ -124,13 +137,20 @@ function visualizeit() {
 	//firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
 	// sort by domain
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	
+	loadData();
+}
+
+function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
-	d3.select("#chart").text("");
+	d3.select("#chart").select("svg").remove();
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length+offset)
-		.attr('height', height*categoryList.length);
+		.attr('height', initheight+padding+(height+padding)*categoryList.length);
 	
+	// reset
+	x = offset;
 	root.selectAll("g").data(firstparty).enter()
 		.append("g")
 		.on("mouseover", function() {
@@ -154,17 +174,17 @@ function visualizeit() {
 				
 				selectedBlock.append("rect")
 				.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
-				.attr('y', 0)
+				.attr('y', padding)
 				.attr('width', width)
-				.attr('height', height + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y")))
+				.attr('height', height + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y")) - padding)
 				.attr('fill', '#ff0')
 				.attr('opacity', 0.5);
 			})
 		.append("rect")
 		.attr('x', function(d) {x += width; return x;})
-		.attr('y', 0)
+		.attr('y', padding)
 		.attr('width', width)
-		.attr('height', height)
+		.attr('height', initheight)
 		.attr('fill', function(d) { return colors(d.category); })
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
@@ -188,6 +208,7 @@ function visualizeit() {
 		;
 	
 	// add labels
+	/*
 	root.selectAll("g")
 		.append("text")
 		.attr('x', 0)
@@ -197,21 +218,8 @@ function visualizeit() {
 		.attr('fill', function(d) { return colors(d.category); })
 		.text(function(d) { return d.category; })
 		;
+	*/
 }
-
-
-var active_categories = [
-    { value: 'Advertisement', data: '30%', enabled: false },
-    { value: 'Marketing', data: '19%', enabled: false },
-    { value: 'Web Clients', data: '12%', enabled: false },
-    { value: 'Video', data: '8%', enabled: false },
-  ];
-
-  var other_categories = [{ value: 'API', data: '15%', enabled: false },
-    { value: 'Suspicious', data: '12%', enabled: false },
-    { value: 'Content Servers', data: '12%', enabled: false },
-    { value: 'Web Analysis', data: '8%', enabled: false },
-    { value: 'Social Networking', data: '5%', enabled: false },];
 
 $(function () {
     // setup autocomplete function pulling from categories[] array
@@ -236,6 +244,9 @@ $(function () {
 
             active_categories.push(item);
             $(document).trigger('click');
+			
+			// update
+			loadData();
         }
     });
 });
@@ -262,5 +273,8 @@ function remove_active_item(remove_item)
     }
 
     other_categories.push(item);
+	
+	// update
+	loadData();
 }
 
