@@ -42,9 +42,7 @@ function init(selector) {
             .attr("width", 1300)
             .attr("height", 520);
     viewType = "domain";
-    loadData(domainId);
     drawTimeline();
-    drawGraph();
     for (var cid in completeData.catList) {
         skipedCategoryIdDict[cid] = false;
     }
@@ -78,7 +76,7 @@ function drawTimeline() {
             }
         })
         .append("title")
-        .text("Show previuos view.");
+        .text("Show the previous view.");
     timeline.append("text")
             .attr("id", "undo")
             .attr("x", 25)
@@ -109,7 +107,7 @@ function drawTimeline() {
             }
         })
         .append("title")
-        .text("Show next view.");
+        .text("Show the next view.");
     timeline.append("text")
             .attr("id", "redo")
             .attr("x", nextScreenX+bubbleCenter[0]-15)
@@ -633,9 +631,11 @@ function drawP1Box(data) {
                               if (viewType == "domain") {
                                   domainUndoList.push(domainId);
                                   domainId = d.id;
+                                  domainRedoList = [];
                               } else {
                                   categoryUndoList.push(categoryId);
                                   categoryId = d.id;
+                                  categoryRedoList = [];
                               }
                               loadData(d.id);
                               drawGraph();
@@ -790,18 +790,15 @@ function removeRightPart() {
     svg.select("#p1List").remove();
 }
 
-function drawGraph() {
-    var label;
+function refreshTimeline() {
     var undoLength;
     var redoLength;
     if (viewType == "domain") {
-        label = completeData.domainList[domainId];
         undoLength = domainUndoList.length;
         redoLength = domainRedoList.length;
         undoLabel = completeData.domainList[domainUndoList[undoLength-1]];
         redoLabel = completeData.domainList[domainRedoList[redoLength-1]];
     } else {
-        label = completeData.catList[categoryId];
         undoLength = categoryUndoList.length;
         redoLength = categoryRedoList.length;
         undoLabel = completeData.catList[categoryUndoList[undoLength-1]];
@@ -819,8 +816,15 @@ function drawGraph() {
     } else {
         svg.select("#timeline #right").attr("status", "active");
     }
-    $("#current-"+viewType).text(label);
     svg.select("#canvas").remove();
+}
+
+function drawGraph() {
+    var label = viewType == "domain"
+                ? completeData.domainList[domainId]
+                : completeData.catList[categoryId];
+    $("#current-"+viewType).text(label);
+    refreshTimeline();
     var canvas = svg.append("g")
                     .attr("id", "canvas");
     // Bubble events
