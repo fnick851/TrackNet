@@ -16,11 +16,16 @@
 	</head>
 	<body onload="runMain()">
 		<div id="category_selector">
-            <div id="searchfield">
+			<div id="tabs">
+				<ul>
+					<li><a href="#domain">Website</a></li>
+					<li><a href="#category">Category</a></li>
+				</ul>
+			</div>
+			<div id="searchfield">
                 <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for categories" onclick="$('#autocomplete').autocomplete('search', '');"></form>
             </div>
-            <div id="active_categories">
-            </div>
+            <div id="active_categories"></div>
         </div>
 		<div id="chart"></div>
 		<div id="details">Domain</div>

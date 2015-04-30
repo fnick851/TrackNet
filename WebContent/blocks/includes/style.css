@@ -212,3 +212,34 @@ p {
 	top:0px;
 	left:300px;
 }
+
+#tabs ul
+{
+	width:180px;
+	padding: 2px;
+	margin: 0 0 0 80px;
+	list-style-type:none;
+}
+#tabs li {
+	display:inline;
+	width:140px;
+
+}
+#tabs li a
+{
+	text-align:center;
+	text-decoration:none;
+	width: 140px;
+    padding: 2px;
+    margin: 3px;
+    background-color: #eee;
+    box-shadow: 0 0 4px #999;
+    height: 22px;
+    margin-bottom: 7.5px;
+    transition: background-color 0.35s ease;
+}
+
+#tabs .selected
+{
+	background-color: #ccc;
+}

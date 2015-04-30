@@ -2,7 +2,7 @@
 var td;
 var categories;
 var width=3;
-var height=17; // active_category div height
+var height=20; // active_category div height
 var padding=16; // pixels between rows
 var initheight=40; // search form height
 var offset=5; // left margin for labels
@@ -255,7 +255,7 @@ function loadData() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
-		.attr('y', function(d) { return y +padding/4+ getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('y', function(d) { return y +padding/2 + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
 		.attr('width', width)
 		.attr('height', height)
 		.attr('fill', function(d) { return colors(d.category); })
