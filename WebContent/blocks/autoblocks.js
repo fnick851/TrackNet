@@ -225,12 +225,28 @@ function loadData() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 0.5);
 				var details = d3.select("#details");
-				details.text(block.data()[0].domain);
-				details.append('p').text(block.data()[0].category);
+				details.selectAll('p').remove();
+				details.append('p')
+					.text(block.data()[0].domain)
+					.attr("class", "domain");
+				details.append('p')
+					.text(block.data()[0].category)
+					.attr("class", "category");
 			})
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
+				
+				if (selectedBlock != null) {
+					var details = d3.select("#details");
+					details.selectAll('p').remove();
+					details.append('p')
+						.text(block.data()[0].domain)
+						.attr("class", "domain");
+					details.append('p')
+						.text(block.data()[0].category)
+						.attr("class", "category");
+				}
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {

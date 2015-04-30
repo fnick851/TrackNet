@@ -258,3 +258,8 @@ p {
 	border:0px none;
 	margin-left:5px;
 }
+
+#details p {
+	font-size: 20px;
+	margin: 5px 20px;
+}
