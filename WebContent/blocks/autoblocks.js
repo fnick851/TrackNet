@@ -2,10 +2,10 @@
 var td;
 var categories;
 var width=3;
-var height=26; // active_category div height
-var padding=7; // pixels between rows
+var height=17; // active_category div height
+var padding=16; // pixels between rows
 var initheight=40; // search form height
-var offset=150; // left margin for labels
+var offset=5; // left margin for labels
 var x=offset;
 var trackedColor = 0.75;
 var cookieColor = 0.6;
@@ -166,7 +166,8 @@ function loadData() {
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {
-					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[3]);
+					console.log(selectedBlock[0][0].childNodes[2]);
+					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[2]);
 				}
 				
 				selectedBlock = d3.select(this);
@@ -198,13 +199,15 @@ function loadData() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
-		.attr('y', function(d) { return y + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('y', function(d) { return y +padding/4+ getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
 		.attr('width', width)
 		.attr('height', height)
 		.attr('fill', function(d) { return colors(d.category); })
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
+		.append("svg:title")
+		.text(function(d) { return d.domain; })
 		;
 	
 	// add labels
