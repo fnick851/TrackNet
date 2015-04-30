@@ -139,7 +139,7 @@ function initializeSearchBox() {
 	for(var i = 0; i < active_categories.length; i++)
 	{
 		var html = '<div class="active_category_item">' +
-			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
+			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
 			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
 			//'<input type="checkbox">' +
@@ -156,7 +156,7 @@ function initializeSearchBox() {
 		lookup: other_categories,
 		onSelect: function (item) {
 			var html = '<div class="active_category_item">' +
-			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
+			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
 			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +

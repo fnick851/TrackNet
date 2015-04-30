@@ -178,12 +178,18 @@ p {
 
 .active_category_item .delete_item
 {
-    height: 11.5px;
-    border-radius: 15px;
+    /*
+	height: 11.5px;
     background-color: #f00;
-    border: none;
     box-shadow: 0 0 3px #444;
     margin: 5px;
+	*/
+	border-radius: 15px;
+    border: none;
+    height:21px;
+	color:#c00;
+	background-color:#eee;
+	font-size:16px;
 }
 
 #category_selector
@@ -256,7 +262,8 @@ p {
 	float:right;
 	background-color:#eee;
 	border:0px none;
-	margin-left:5px;
+	border-radius: 10px;
+    margin-left:5px;
 }
 
 #details p {
