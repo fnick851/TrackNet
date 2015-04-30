@@ -19,6 +19,16 @@ var active_categories;
 var other_categories;
 var curView = 0; // website, 1 for category
 
+function websiteSearch() {
+	// todo
+	console.log("searching websites");
+}
+
+function categorySearch() {
+	// todo
+	console.log("searching categories");
+}
+
 function websiteView() {
 	curView = 0;
 	d3.select("#webview").attr("class", "selected");
@@ -48,22 +58,6 @@ function runMain() {
 			visualizeit();		  
 		});
 	});
-}
-
-var onMouseOverFirstParty = function() {
-	var block = d3.select(this);
-	var oldFill = block.attr("fill");
-	block.attr("oldFill", oldFill);
-	block.transition().duration(500).attr('fill', '#f00');
-	
-	var details = d3.select("#details");
-	details.text(block.domain);
-}
-
-var onMouseOutFirstParty = function() {
-	var block = d3.select(this);
-	var oldFill = block.attr("oldFill");
-	block.transition().duration(500).attr('fill', oldFill);
 }
 
 function isTracked(domainId) {
@@ -255,15 +249,15 @@ function loadData() {
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
+				var details = d3.select("#details");
+				details.selectAll('p').remove();
 				
 				if (selectedBlock != null) {
-					var details = d3.select("#details");
-					details.selectAll('p').remove();
 					details.append('p')
-						.text(block.data()[0].domain)
+						.text(selectedBlock.data()[0].domain)
 						.attr("class", "domain");
 					details.append('p')
-						.text(block.data()[0].category)
+						.text(selectedBlock.data()[0].category)
 						.attr("class", "category");
 				}
 			})
@@ -323,19 +317,6 @@ function loadData() {
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
 		;
-	
-	// add labels
-	/*
-	root.selectAll("g")
-		.append("text")
-		.attr('x', 0)
-		.attr('y', function(d) { return height*2 + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
-		.attr('font-family', 'Verdana')
-		.attr('font-size', (height*0.75)+"px")
-		.attr('fill', function(d) { return colors(d.category); })
-		.text(function(d) { return d.category; })
-		;
-	*/
 }
 
 function remove_active_item(remove_item)

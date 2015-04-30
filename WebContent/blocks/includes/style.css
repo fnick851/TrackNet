@@ -194,7 +194,9 @@ p {
 
 #category_selector
 {
-    width: 281px;
+    width: 280px;
+	float:left;
+	padding-top:15px;
 }
 
 #other_categories
@@ -212,31 +214,30 @@ p {
 {
 }
 
-#chart
+#chart, #tabs #firstparty
 {
-	position:absolute;
-	top:0px;
-	left:300px;
+	margin-left:300px;
+}
+#tabs #thirdparty
+{
+	float:left;
 }
 
 #tabs ul
 {
-	width:180px;
 	padding: 2px;
-	margin: 0 0 0 80px;
+	margin: 0;
 	list-style-type:none;
+	width:200px;
 }
 #tabs li {
 	display:inline;
-	width:140px;
-
 }
 #tabs li a
 {
 	text-align:center;
 	text-decoration:none;
-	width: 140px;
-    padding: 2px;
+	padding: 2px;
     margin: 3px;
     background-color: #eee;
     box-shadow: 0 0 4px #999;
@@ -253,7 +254,8 @@ p {
 
 #tabs span {
 	float:left;
-	padding: 2px 2px 1px 20px;
+	padding: 2px;
+	width:60px;
 }
 
 .move_up, .move_down {
