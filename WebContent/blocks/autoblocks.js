@@ -159,8 +159,8 @@ function initializeSearchBox() {
 			'<button class="delete_item" onclick="remove_active_item(this);"></button>' +
 			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
-			'<button class="move_up" onclick="moveUp(this);"></button>' +
-			'<button class="move_down" onclick="moveDown(this);"></button>' +
+			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
+			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			//'<input type="checkbox">' +
 			'</div>';
 
@@ -291,11 +291,6 @@ function loadData() {
 	*/
 }
 
-function pop_to_top(category_item)
-{
-    
-}
-
 function remove_active_item(remove_item)
 {
     var item_value = $(remove_item).next().html();
@@ -318,3 +313,38 @@ function remove_active_item(remove_item)
 	loadData();
 }
 
+function moveUp(moveItem) {
+    var item_value = $(moveItem).prev().prev().prev().html();
+    
+	for (var i = 1; i < active_categories.length; i++)  {
+		if (active_categories[i].value == item_value)  {
+			var item = active_categories[i];
+			var prev = active_categories[i-1];
+			active_categories[i-1] = item;
+			active_categories[i] = prev;
+			
+			var itemDiv = $(moveItem).parent();
+			itemDiv.prev().before(itemDiv);
+			loadData();
+			return;
+        }
+    }
+}
+
+function moveDown(moveItem) {
+    var item_value = $(moveItem).prev().prev().prev().prev().html();
+    
+	for (var i = 0; i < active_categories.length-1; i++)  {
+		if (active_categories[i].value == item_value)  {
+			var item = active_categories[i];
+			var next = active_categories[i+1];
+			active_categories[i+1] = item;
+			active_categories[i] = next;
+			
+			var itemDiv = $(moveItem).parent();
+			itemDiv.next().after(itemDiv);
+			loadData();
+			return;
+        }
+    }
+}
