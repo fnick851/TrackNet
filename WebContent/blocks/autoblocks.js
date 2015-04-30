@@ -17,19 +17,22 @@ var categories;
 var x;
 var active_categories;
 var other_categories;
+var curView = 0; // website, 1 for category
 
 function websiteView() {
+	curView = 0;
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
-	loadData();
+	runMain();
 }
 
 function categoryView() {
+	curView = 1;
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	loadData();
+	runMain();
 }
 
 function runMain() {
@@ -104,11 +107,22 @@ function initializeCategories() {
 	firstparty = td["first_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
-	for (var key in firstparty) {
-		if (clist[firstparty[key].category] == null)
-			clist[firstparty[key].category] = 1;
-		else
-			clist[firstparty[key].category]++;
+	// website view
+	if (curView == 0) {
+		for (var key in firstparty) {
+			if (clist[firstparty[key].category] == null)
+				clist[firstparty[key].category] = 1;
+			else
+				clist[firstparty[key].category]++;
+		}
+	} else {
+		// category view
+		for (var key in firstparty) {
+			if (clist[firstparty[key].domain] == null)
+				clist[firstparty[key].domain] = 1;
+			else
+				clist[firstparty[key].domain]++;
+		}
 	}
 	
 	// convert into tuples to sort descending by count
@@ -135,7 +149,10 @@ function initializeCategories() {
 }
 
 function initializeSearchBox() {
+	// clear div
 	// set up search box
+	$('#active_categories').empty();
+	
 	for(var i = 0; i < active_categories.length; i++)
 	{
 		var html = '<div class="active_category_item">' +
@@ -204,8 +221,10 @@ function visualizeit() {
 	thirdparty = td["third_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
-	// default to sort by domain
-	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	if (curView == 0)
+		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	else
+		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
 	loadData();
 }
 
@@ -269,7 +288,11 @@ function loadData() {
 		.attr('y', padding)
 		.attr('width', width)
 		.attr('height', initheight)
-		.attr('fill', function(d) { return colors(d.category); })
+		.attr('fill', function(d) {
+				if (curView == 0)
+					return colors(d.category);
+				return colors(d.domain);
+			})
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
@@ -282,10 +305,18 @@ function loadData() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
-		.attr('y', function(d) { return y + padding + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('y', function(d) {
+				if (curView == 0)
+					return y + padding + getHeightForCat(height, d.category, categoryList);
+				return y + padding + getHeightForCat(height, d.domain, categoryList);
+			})
 		.attr('width', width)
 		.attr('height', height)
-		.attr('fill', function(d) { return colors(d.category); })
+		.attr('fill', function(d) {
+				if (curView == 0)
+					return colors(d.category);
+				return colors(d.domain);
+			})
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
