@@ -4,9 +4,9 @@ var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
 var initheight=40; 	// search form height
 var offset=5; 		// left margin for labels
-var trackedColor = 0.75;
-var cookieColor = 0.6;
-var untrackedColor = 1.0;
+var trackedColor = 0.8; // opacity coding
+var cookieColor = 1.0;
+var untrackedColor = 0.5;
 var colors = d3.scale.category10();
 
 // global vars
@@ -254,6 +254,7 @@ function loadData() {
 	
 	// reset
 	x = offset;
+	xpos = {};
 	root.selectAll("g").data(firstparty).enter()
 		.append("g")
 		.on("mouseover", function() {
@@ -298,7 +299,11 @@ function loadData() {
 					.attr('opacity', 0.5);
 			})
 		.append("rect")
-		.attr('x', function(d) {x += width; return x;})
+		.attr('x', function(d) {
+				x += width;
+				xpos[d.uid] = x;
+				return x;
+			})
 		.attr('y', padding)
 		.attr('width', width)
 		.attr('height', initheight)
@@ -317,12 +322,15 @@ function loadData() {
 		.append("svg:title")
 		.text(function(d) { return d.domain; });
 	
-	// add individual blocks per category
+	// add individual blocks for third-party
 	x = offset;
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
 		.append("rect")
-		.attr('x', function(d) { x += width; return x; })
+		.attr('x', function(d) {
+				return xpos[d.uid];
+				//x += width; return x;
+			})
 		.attr('y', function(d) {
 				if (curSearch == 1)
 					return y + padding + getHeightForCat(height, d.category, categoryList);
