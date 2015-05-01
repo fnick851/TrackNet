@@ -71,3 +71,14 @@ text {
     top: -20px;
     border-bottom: 10px solid #444;
 }
+#status {
+    font-size: 16px;
+    position: relative;
+    left: 120px;
+    padding: 5px;
+}
+#status-domain,
+#status-category {
+    position: relative;
+    left: 20px;
+}

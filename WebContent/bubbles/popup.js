@@ -1,9 +1,9 @@
 d3.json("data/851.adjacency.json", function(error, data) {
     completeData = data;
     
-    pv = getUrlVars();
+    var pv = getUrlVars();
     if ("domain" in pv) {
-    	$("#status font").attr("id", "current-domain");
+        $("#status font").attr("id", "current-domain");
         init("#bubblesView", "domain");
         if (domainId >= 0)
             domainUndoList.push(domainId);
@@ -12,7 +12,7 @@ d3.json("data/851.adjacency.json", function(error, data) {
         loadData(domainId);
         drawGraph();
     } else if ("category" in pv) {
-    	$("#status font").attr("id", "current-category");
+        $("#status font").attr("id", "current-category");
         init("#bubblesView", "category");
         if (categoryId >= 0)
             categoryUndoList.push(categoryId);

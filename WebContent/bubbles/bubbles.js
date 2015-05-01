@@ -675,7 +675,8 @@ function drawP1List(data) {
     var list = completeData.thirdPartyDomains[data.id][listType];
     for (var i = 0; p1ListData.length < p1ListVisibleCapacity && i < list.length; i++) {
         var p1Id = list[i];
-        if (domainId == p1Id)
+        if ((p1Id == domainId && viewType == "domain") ||
+            (p1Id == categoryId && viewType == "category"))
             continue;
         var y = p1ListTopLeft[1]+70+p1ListItemDimentions[1]*p1ListData.length;
         p1ListData.push({"index":p1ListData.length,
@@ -794,6 +795,8 @@ function removeRightPart() {
 function refreshTimeline() {
     var undoLength;
     var redoLength;
+    var undoLabel;
+    var redoLabel;
     if (viewType == "domain") {
         undoLength = domainUndoList.length;
         redoLength = domainRedoList.length;
