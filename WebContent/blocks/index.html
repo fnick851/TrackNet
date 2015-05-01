@@ -15,14 +15,23 @@
 		
 	</head>
 	<body onload="runMain()">
-		<div id="category_selector">
-			<div id="tabs">
+		<div id="tabs">
+			<div id="thirdparty">
+				<span>Search For:</span>
+				<ul>
+					<li><a href="#" onclick="websiteSearch()" id="websearch" class="selected">Website</a></li>
+					<li><a href="#" onclick="categorySearch()" id="categorysearch">Category</a></li>
+				</ul>
+			</div>
+			<div id="firstparty">
 				<span>Sort By:</span>
 				<ul>
 					<li><a href="#" onclick="websiteView()" id="webview" class="selected">Website</a></li>
 					<li><a href="#" onclick="categoryView()" id="categoryview">Category</a></li>
 				</ul>
 			</div>
+		</div>
+		<div id="category_selector">
 			<div id="searchfield">
                 <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for categories" onclick="$('#autocomplete').autocomplete('search', '');"></form>
             </div>

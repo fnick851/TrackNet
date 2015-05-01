@@ -17,19 +17,32 @@ var categories;
 var x;
 var active_categories;
 var other_categories;
+var curView = 0; // website, 1 for category
+
+function websiteSearch() {
+	// todo
+	console.log("searching websites");
+}
+
+function categorySearch() {
+	// todo
+	console.log("searching categories");
+}
 
 function websiteView() {
+	curView = 0;
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
-	loadData();
+	runMain();
 }
 
 function categoryView() {
+	curView = 1;
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
 	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	loadData();
+	runMain();
 }
 
 function runMain() {
@@ -45,22 +58,6 @@ function runMain() {
 			visualizeit();		  
 		});
 	});
-}
-
-var onMouseOverFirstParty = function() {
-	var block = d3.select(this);
-	var oldFill = block.attr("fill");
-	block.attr("oldFill", oldFill);
-	block.transition().duration(500).attr('fill', '#f00');
-	
-	var details = d3.select("#details");
-	details.text(block.domain);
-}
-
-var onMouseOutFirstParty = function() {
-	var block = d3.select(this);
-	var oldFill = block.attr("oldFill");
-	block.transition().duration(500).attr('fill', oldFill);
 }
 
 function isTracked(domainId) {
@@ -104,11 +101,22 @@ function initializeCategories() {
 	firstparty = td["first_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
-	for (var key in firstparty) {
-		if (clist[firstparty[key].category] == null)
-			clist[firstparty[key].category] = 1;
-		else
-			clist[firstparty[key].category]++;
+	// website view
+	if (curView == 0) {
+		for (var key in firstparty) {
+			if (clist[firstparty[key].category] == null)
+				clist[firstparty[key].category] = 1;
+			else
+				clist[firstparty[key].category]++;
+		}
+	} else {
+		// category view
+		for (var key in firstparty) {
+			if (clist[firstparty[key].domain] == null)
+				clist[firstparty[key].domain] = 1;
+			else
+				clist[firstparty[key].domain]++;
+		}
 	}
 	
 	// convert into tuples to sort descending by count
@@ -135,7 +143,10 @@ function initializeCategories() {
 }
 
 function initializeSearchBox() {
+	// clear div
 	// set up search box
+	$('#active_categories').empty();
+	
 	for(var i = 0; i < active_categories.length; i++)
 	{
 		var html = '<div class="active_category_item">' +
@@ -204,8 +215,10 @@ function visualizeit() {
 	thirdparty = td["third_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
-	// default to sort by domain
-	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	if (curView == 0)
+		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+	else
+		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
 	loadData();
 }
 
@@ -236,15 +249,15 @@ function loadData() {
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
+				var details = d3.select("#details");
+				details.selectAll('p').remove();
 				
 				if (selectedBlock != null) {
-					var details = d3.select("#details");
-					details.selectAll('p').remove();
 					details.append('p')
-						.text(block.data()[0].domain)
+						.text(selectedBlock.data()[0].domain)
 						.attr("class", "domain");
 					details.append('p')
-						.text(block.data()[0].category)
+						.text(selectedBlock.data()[0].category)
 						.attr("class", "category");
 				}
 			})
@@ -269,7 +282,11 @@ function loadData() {
 		.attr('y', padding)
 		.attr('width', width)
 		.attr('height', initheight)
-		.attr('fill', function(d) { return colors(d.category); })
+		.attr('fill', function(d) {
+				if (curView == 0)
+					return colors(d.category);
+				return colors(d.domain);
+			})
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
@@ -282,29 +299,24 @@ function loadData() {
 	root.selectAll("g")
 		.append("rect")
 		.attr('x', function(d) { x += width; return x; })
-		.attr('y', function(d) { return y + padding + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
+		.attr('y', function(d) {
+				if (curView == 0)
+					return y + padding + getHeightForCat(height, d.category, categoryList);
+				return y + padding + getHeightForCat(height, d.domain, categoryList);
+			})
 		.attr('width', width)
 		.attr('height', height)
-		.attr('fill', function(d) { return colors(d.category); })
+		.attr('fill', function(d) {
+				if (curView == 0)
+					return colors(d.category);
+				return colors(d.domain);
+			})
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
 		;
-	
-	// add labels
-	/*
-	root.selectAll("g")
-		.append("text")
-		.attr('x', 0)
-		.attr('y', function(d) { return height*2 + getHeightForCat(height, d.category, categoryList); }) // todo or sort by domain
-		.attr('font-family', 'Verdana')
-		.attr('font-size', (height*0.75)+"px")
-		.attr('fill', function(d) { return colors(d.category); })
-		.text(function(d) { return d.category; })
-		;
-	*/
 }
 
 function remove_active_item(remove_item)
