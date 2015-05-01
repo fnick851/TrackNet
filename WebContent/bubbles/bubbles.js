@@ -36,12 +36,12 @@ var p1ListVisibleCapacity = boxVisibleCapacity;
 
 var nextScreenX = 1000;
 
-function init(selector) {
+function init(selector, vtype) {
     svg = d3.select(selector)
             .append("svg")
             .attr("width", 1300)
             .attr("height", 520);
-    viewType = "domain";
+    viewType = vtype;
     drawTimeline();
     for (var cid in completeData.catList) {
         skipedCategoryIdDict[cid] = false;
