@@ -5,6 +5,8 @@ var viewType;
 var completeData;
 var domainId;
 var categoryId;
+
+var useCookie;
 var skipedCategoryIdDict = {};
 
 var domainUndoList = [];
@@ -36,15 +38,27 @@ var p1ListVisibleCapacity = boxVisibleCapacity;
 
 var nextScreenX = 1000;
 
-function init(selector, vtype) {
+function init(selector, vtype, uc) {
     svg = d3.select(selector)
             .append("svg")
             .attr("width", 1300)
             .attr("height", 520);
     viewType = vtype;
     drawTimeline();
-    for (var cid in completeData.catList) {
-        skipedCategoryIdDict[cid] = false;
+    useCookie = uc;
+    if (useCookie) {
+        skipedCategoryIdDict = Cookies.getJSON("skipedCategoryIdDict");
+    } else {
+        for (var cid in completeData.catList) {
+            skipedCategoryIdDict[cid] = false;
+        }
+    }
+}
+
+function setSkipedCategoryIdDict(id, isSkiped) {
+    skipedCategoryIdDict[id] = isSkiped;
+    if (useCookie) {
+        Cookies.set("skipedCategoryIdDict", skipedCategoryIdDict);
     }
 }
 
@@ -882,7 +896,7 @@ function drawGraph() {
                    removeRightPart();
                } else {
                    // Shrink a bubble
-                   skipedCategoryIdDict[data.id] = true;
+                   setSkipedCategoryIdDict(data.id, true)
                    data.shrink = bubbleData[data.index].shrink = true;
                    data.R = smallRadius;
                    data.r = shrinkRadius;
@@ -894,7 +908,7 @@ function drawGraph() {
                }
            } else {
                // Expand a bubble
-               skipedCategoryIdDict[data.id] = false;
+               setSkipedCategoryIdDict(data.id, false);
                data.shrink = bubbleData[data.index].shrink = false;
                data.R = bigRadius;
                data.r = data.r;
