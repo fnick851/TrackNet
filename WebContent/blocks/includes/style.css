@@ -214,10 +214,17 @@ p {
 {
 }
 
-#chart, #tabs #firstparty
+#chartholder, #tabs #firstparty
 {
 	margin-left:300px;
 }
+#chart
+{
+	overflow-x:scroll;
+	width:80%;
+	padding-bottom:10px;
+}
+
 #tabs #thirdparty
 {
 	float:left;
