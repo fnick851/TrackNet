@@ -1,4 +1,4 @@
-d3.json("data/851.adjacency.json", function(error, data) {
+d3.json("../data/851.adjacency.json", function(error, data) {
     completeData = data;
     
     if (document.cookie.length == 0) {
