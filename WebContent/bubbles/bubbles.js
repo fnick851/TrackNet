@@ -858,7 +858,9 @@ function drawGraph() {
        .on("click", function(data) {
            if (data.shrink != true) {
                var circle = d3.select(this).select("circle");
-               if (d3.mouse(this)[1] > circle.attr("cy")-circle.attr("r")/2) {
+               if (d3.mouse(this)[1] > data.y-data.r/2 ||
+                   d3.mouse(this)[0] < data.x-data.r/4 ||
+                   d3.mouse(this)[0] > data.x+data.r/4) {
                    var thisBubble = d3.select(this);
                    // Move a bubble to the right-most position.
                    rightMostAngle = data.angle;
