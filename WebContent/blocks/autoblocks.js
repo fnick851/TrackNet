@@ -4,9 +4,9 @@ var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
 var initheight=40; 	// search form height
 var offset=5; 		// left margin for labels
-var trackedColor = 0.75;
-var cookieColor = 0.6;
-var untrackedColor = 1.0;
+var trackedColor = 0.8; // opacity coding
+var cookieColor = 1.0;
+var untrackedColor = 0.5;
 var colors = d3.scale.category10();
 
 // global vars
@@ -18,15 +18,28 @@ var x;
 var active_categories;
 var other_categories;
 var curView = 0; // website, 1 for category
+var curSearch = 0; // website, 1 for category
 
 function websiteSearch() {
+	curSearch = 0;
+	d3.select("#websearch").attr("class", "selected");
+	d3.select("#categorysearch").attr("class", "");
+	
 	// todo
 	console.log("searching websites");
+	
+	runMain();
 }
 
 function categorySearch() {
+	curSearch = 1;
+	d3.select("#categorysearch").attr("class", "selected");
+	d3.select("#websearch").attr("class", "");
+	
 	// todo
 	console.log("searching categories");
+	
+	runMain();
 }
 
 function websiteView() {
@@ -98,24 +111,28 @@ function initializeCategories() {
 	active_categories = [];
 	other_categories = [];
 	clist = {};
+	
 	firstparty = td["first_party"];
 	firstparty = addCategoriesToJson(firstparty);
 	
-	// website view
-	if (curView == 0) {
-		for (var key in firstparty) {
-			if (clist[firstparty[key].category] == null)
-				clist[firstparty[key].category] = 1;
+	thirdparty = td["third_party"];
+	thirdparty = addCategoriesToJson(thirdparty);
+	
+	if (curSearch == 1) {
+		// searching by category
+		for (var key in thirdparty) {
+			if (clist[thirdparty[key].category] == null)
+				clist[thirdparty[key].category] = 1;
 			else
-				clist[firstparty[key].category]++;
+				clist[thirdparty[key].category]++;
 		}
 	} else {
-		// category view
-		for (var key in firstparty) {
-			if (clist[firstparty[key].domain] == null)
-				clist[firstparty[key].domain] = 1;
+		// searching by websites
+		for (var key in thirdparty) {
+			if (clist[thirdparty[key].domain] == null)
+				clist[thirdparty[key].domain] = 1;
 			else
-				clist[firstparty[key].domain]++;
+				clist[thirdparty[key].domain]++;
 		}
 	}
 	
@@ -143,9 +160,13 @@ function initializeCategories() {
 }
 
 function initializeSearchBox() {
-	// clear div
 	// set up search box
+	// clear div
 	$('#active_categories').empty();
+	if (curSearch == 1)
+		$('#autocomplete').attr("placeholder", "Search for category");
+	else
+		$('#autocomplete').attr("placeholder", "Search for website");
 	
 	for(var i = 0; i < active_categories.length; i++)
 	{
@@ -226,12 +247,14 @@ function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
+	var totalheight = initheight+padding+(height+padding)*categoryList.length;
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length+offset)
-		.attr('height', initheight+padding+(height+padding)*categoryList.length);
+		.attr('height', totalheight);
 	
 	// reset
 	x = offset;
+	xpos = {};
 	root.selectAll("g").data(firstparty).enter()
 		.append("g")
 		.on("mouseover", function() {
@@ -240,17 +263,31 @@ function loadData() {
 				var details = d3.select("#details");
 				details.selectAll('p').remove();
 				details.append('p')
+					.append("a")
+					.attr("href", "#")
 					.text(block.data()[0].domain)
 					.attr("class", "domain");
 				details.append('p')
+					.append("a")
+					.attr("href", "#")
 					.text(block.data()[0].category)
-					.attr("class", "category");
-			})
+					.attr("class", "category");	
+				
+				var divx = parseInt(block.select("rect").attr("x")) + 275; // div offset - 1/2 tooltip width
+				details.transition()
+					.duration(200)
+					.style("opacity", .9)
+					.style("left", divx + "px")
+					.style("top", initheight+height/2 + "px");
+            })
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
 				var details = d3.select("#details");
 				details.selectAll('p').remove();
+				details.transition()
+					.duration(200)
+					.style("opacity", 0);
 				
 				if (selectedBlock != null) {
 					details.append('p')
@@ -263,51 +300,61 @@ function loadData() {
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {
-					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[2]);
+					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[1]);
 				}
 				
 				selectedBlock = d3.select(this);
-				var totalHeight = height*categoryList.length;
-				
 				selectedBlock.append("rect")
-				.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
-				.attr('y', padding)
-				.attr('width', width)
-				.attr('height', height + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y")) - padding)
-				.attr('fill', '#ff0')
-				.attr('opacity', 0.5);
+					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
+					.attr('y', padding)
+					.attr('width', width)
+					.attr('height', totalheight)// + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y"))
+					.attr('fill', '#ff0')
+					.attr('opacity', 0.5);
 			})
 		.append("rect")
-		.attr('x', function(d) {x += width; return x;})
+		.attr('x', function(d) {
+				x += width;
+				xpos[d.uid] = x;
+				return x;
+			})
 		.attr('y', padding)
 		.attr('width', width)
 		.attr('height', initheight)
 		.attr('fill', function(d) {
-				if (curView == 0)
+				/*
+				if (curSearch == 1)
 					return colors(d.category);
 				return colors(d.domain);
+				*/
+				// monochrome per line
+				return "#000";
 			})
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; });
+		//.append("svg:title")
+		//.text(function(d) { return d.domain; })
+		;
 	
-	// add individual blocks per category
+	// add individual blocks for third-party
 	x = offset;
 	y = height+width;
-	root.selectAll("g")
+	root.selectAll("g#tp").data(thirdparty).enter()
 		.append("rect")
-		.attr('x', function(d) { x += width; return x; })
+		.attr('x', function(d) {
+				return xpos[d.uid];
+				//x += width; return x;
+			})
 		.attr('y', function(d) {
-				if (curView == 0)
+				if (curSearch == 1)
 					return y + padding + getHeightForCat(height, d.category, categoryList);
 				return y + padding + getHeightForCat(height, d.domain, categoryList);
 			})
 		.attr('width', width)
 		.attr('height', height)
 		.attr('fill', function(d) {
-				if (curView == 0)
+				if (curSearch == 1)
 					return colors(d.category);
 				return colors(d.domain);
 			})

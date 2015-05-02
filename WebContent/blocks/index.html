@@ -9,10 +9,7 @@
         <link rel="stylesheet" type="text/css" href="includes/style.css">
         <script type="text/javascript" src="includes/jquery-1.11.2.js"></script>
         <script type="text/javascript" src="includes/jquery.autocomplete.js"></script>
-        <!--<script type="text/javascript" src="includes/autocomplete.js"></script>-->
-
-		<script src="autoblocks.js"></script>
-		
+        <script src="autoblocks.js"></script>
 	</head>
 	<body onload="runMain()">
 		<div id="tabs">
@@ -33,11 +30,13 @@
 		</div>
 		<div id="category_selector">
 			<div id="searchfield">
-                <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for categories" onclick="$('#autocomplete').autocomplete('search', '');"></form>
+                <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for website" onclick="$('#autocomplete').autocomplete('search', '');"></form>
             </div>
             <div id="active_categories"></div>
         </div>
-		<div id="chart"></div>
-		<div id="details"></div>
+		<div id="chartholder">
+			<div id="chart"></div>
+			<div id="details" class="tooltip" style="opacity:0"></div>
+		</div>
 	</body>
 </html>

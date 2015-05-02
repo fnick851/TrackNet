@@ -1,6 +1,6 @@
 d3.json("data/851.adjacency.json", function(error, data) {
     completeData = data;
-    init("#tabs", "domain");
+    init("#tabs", "domain", false);
     
     $("#status-domain").hide();
     $("#status-category").hide();
