@@ -263,17 +263,31 @@ function loadData() {
 				var details = d3.select("#details");
 				details.selectAll('p').remove();
 				details.append('p')
+					.append("a")
+					.attr("href", "#")
 					.text(block.data()[0].domain)
 					.attr("class", "domain");
 				details.append('p')
+					.append("a")
+					.attr("href", "#")
 					.text(block.data()[0].category)
-					.attr("class", "category");
-			})
+					.attr("class", "category");	
+				
+				var divx = parseInt(block.select("rect").attr("x")) + 275; // div offset - 1/2 tooltip width
+				details.transition()
+					.duration(200)
+					.style("opacity", .9)
+					.style("left", divx + "px")
+					.style("top", initheight+height/2 + "px");
+            })
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
 				var details = d3.select("#details");
 				details.selectAll('p').remove();
+				details.transition()
+					.duration(200)
+					.style("opacity", 0);
 				
 				if (selectedBlock != null) {
 					details.append('p')
@@ -319,8 +333,9 @@ function loadData() {
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; });
+		//.append("svg:title")
+		//.text(function(d) { return d.domain; })
+		;
 	
 	// add individual blocks for third-party
 	x = offset;
