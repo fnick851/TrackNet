@@ -4,9 +4,9 @@ var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
 var initheight=40; 	// search form height
 var offset=5; 		// left margin for labels
-var trackedColor = 0.8; // opacity coding
+var trackedColor = 0.7; // opacity coding
 var cookieColor = 1.0;
-var untrackedColor = 0.5;
+var untrackedColor = 0.3;
 var colors = d3.scale.category10();
 
 // global vars
@@ -25,10 +25,10 @@ function websiteSearch() {
 	d3.select("#websearch").attr("class", "selected");
 	d3.select("#categorysearch").attr("class", "");
 	
-	// todo
-	console.log("searching websites");
-	
-	runMain();
+	initializeCategories();
+	initializeSearchBox();
+	firstparty = addCategoriesToJson(firstparty);
+	loadData();
 }
 
 function categorySearch() {
@@ -36,26 +36,36 @@ function categorySearch() {
 	d3.select("#categorysearch").attr("class", "selected");
 	d3.select("#websearch").attr("class", "");
 	
-	// todo
-	console.log("searching categories");
-	
-	runMain();
+	initializeCategories();
+	initializeSearchBox();
+	firstparty = addCategoriesToJson(firstparty);
+	loadData();
 }
 
 function websiteView() {
 	curView = 0;
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
-	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
-	runMain();
+	firstparty = firstparty.sort(function(a,b) {
+		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
+		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
+		return d3.ascending(a.domain+aTracking,
+							b.domain+bTracking);
+	});
+	loadData();
 }
 
 function categoryView() {
 	curView = 1;
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
-	firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	runMain();
+	firstparty = firstparty.sort(function(a,b) {
+		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
+		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
+		return d3.ascending(a.category+a.domain+aTracking,
+							b.category+b.domain+bTracking);
+	});
+	loadData();
 }
 
 function runMain() {
@@ -68,6 +78,10 @@ function runMain() {
 			td = json;
 			initializeCategories();
 			initializeSearchBox();
+			
+			firstparty = td["first_party"];
+			thirdparty = td["third_party"];
+			firstparty = addCategoriesToJson(firstparty);
 			visualizeit();		  
 		});
 	});
@@ -85,6 +99,14 @@ function isTracked(domainId) {
 			return false;
 	}
 	return false;
+}
+
+function getDomain(domainId) {
+	// return domain name from first-party given a uid
+	for (i=0;i<firstparty.length;i++) {
+		if (firstparty[i]['uid'] == domainId)
+			return firstparty[i]['domain'];
+	}
 }
 
 function hasCookie(domainId) {
@@ -121,18 +143,22 @@ function initializeCategories() {
 	if (curSearch == 1) {
 		// searching by category
 		for (var key in thirdparty) {
-			if (clist[thirdparty[key].category] == null)
-				clist[thirdparty[key].category] = 1;
-			else
-				clist[thirdparty[key].category]++;
+			if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (clist[thirdparty[key].category] == null)
+					clist[thirdparty[key].category] = 1;
+				else
+					clist[thirdparty[key].category]++;
+			}
 		}
 	} else {
 		// searching by websites
 		for (var key in thirdparty) {
-			if (clist[thirdparty[key].domain] == null)
-				clist[thirdparty[key].domain] = 1;
-			else
-				clist[thirdparty[key].domain]++;
+			if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (clist[thirdparty[key].domain] == null)
+					clist[thirdparty[key].domain] = 1;
+				else
+					clist[thirdparty[key].domain]++;
+			}
 		}
 	}
 	
@@ -232,15 +258,11 @@ function getHeightForCat(step, category, categoryList) {
 }
 
 function visualizeit() {
-	firstparty = td["first_party"];
-	thirdparty = td["third_party"];
-	firstparty = addCategoriesToJson(firstparty);
-	
+// previously: store firstparty/thirdparty vars,add categories, sort
 	if (curView == 0)
-		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.domain, b.domain);});
+		websiteView();
 	else
-		firstparty = firstparty.sort(function(a,b) { return d3.ascending(a.category+a.domain,b.category+b.domain);});
-	loadData();
+		categoryView();
 }
 
 function loadData() {
@@ -359,6 +381,9 @@ function loadData() {
 				return colors(d.domain);
 			})
 		.attr('opacity', function(d) {
+				if (getDomain(d.uid) == d.domain) {
+					return 0; // do not show self-tracking
+				}
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
 		.append("svg:title")
