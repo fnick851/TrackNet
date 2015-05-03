@@ -485,6 +485,7 @@ function moveUp(moveItem) {
 			itemDiv.prev().before(itemDiv);
 			
 			initializeSearchBox();
+			loadData();
 			return;
         }
     }
@@ -504,6 +505,7 @@ function moveDown(moveItem) {
 			itemDiv.next().after(itemDiv);
 			
 			initializeSearchBox();
+			loadData();
 			return;
         }
     }
