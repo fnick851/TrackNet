@@ -207,19 +207,29 @@ function initializeSearchBox() {
 	else
 		$('#autocomplete').attr("placeholder", "Search for website");
 	
+	var unionTotal = 0;
 	for(var i = 0; i < active_categories.length; i++)
 	{
 		var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
 			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
-			//'<input type="checkbox">' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			'</div>';
 
 		$('#active_categories').append(html);
+		
+		unionTotal += active_categories[i].data;
 	}
+	
+	// add union row label
+	$('#active_categories').append(
+		'<div class="active_category_item">' +
+		'<button class="delete_item">&nbsp;</button>' +
+		'<span class="item_name">All Selected</span>' + '<span class="separator">|</span> ' +
+		'<i><span class="item_percent">' + unionTotal + '</span></i>' +
+		'</div>');
 	
 	// setup autocomplete function pulling from categories[] array
 	$('#autocomplete').autocomplete({
@@ -232,7 +242,6 @@ function initializeSearchBox() {
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
-			//'<input type="checkbox">' +
 			'</div>';
 
 			$('#active_categories').append(html);
@@ -247,6 +256,7 @@ function initializeSearchBox() {
 			$(document).trigger('click');
 			
 			// update
+			initializeSearchBox();
 			loadData();
 		}
     });
@@ -264,10 +274,10 @@ function getHeightForCat(step, category, categoryList) {
 	h = initheight-step+padding;
 	for (i=0;i<categoryList.length;i++) {
 		if (categoryList[i] == category)
-			break;
+			return h;
 		h += step + padding;
 	}
-	return h;
+	return -100;
 }
 
 function visualizeit() {
@@ -282,10 +292,10 @@ function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
-	var totalheight = initheight+padding+(height+padding)*categoryList.length;
+	var totalHeight = initheight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length+offset)
-		.attr('height', totalheight);
+		.attr('height', totalHeight);
 	
 	// reset
 	x = offset;
@@ -343,7 +353,7 @@ function loadData() {
 					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
 					.attr('y', padding)
 					.attr('width', width)
-					.attr('height', totalheight)// + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y"))
+					.attr('height', totalHeight)// + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y"))
 					.attr('fill', '#ff0')
 					.attr('opacity', 0.5);
 			})
@@ -402,6 +412,40 @@ function loadData() {
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
 		;
+	
+	// add 'union' row at bottom
+	x = offset;
+	y = height+width;
+	root.selectAll("g#union").data(thirdparty).enter()
+		.append("rect")
+		.attr('x', function(d) {
+				return xpos[d.uid];
+				//x += width; return x;
+			})
+		.attr('y', function(d) {
+				origHeight = -100;
+				if (curSearch == 1)
+					origHeight = getHeightForCat(height, d.category, categoryList);
+				else
+					origHeight = getHeightForCat(height, d.domain, categoryList);
+				if (origHeight == -100)
+					return origHeight;
+				return totalHeight - height;
+			})
+		.attr('width', width)
+		.attr('height', height)
+		.attr('fill', function(d) {
+				return "#000";
+			})
+		.attr('opacity', function(d) {
+				//if (getDomain(d.uid) == d.domain) {
+				//	return 0; // do not show self-tracking
+				//}
+				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+			})
+		.append("svg:title")
+		.text(function(d) { return d.domain; })
+		;
 }
 
 function remove_active_item(remove_item)
@@ -423,6 +467,7 @@ function remove_active_item(remove_item)
     other_categories.push(item);
 	
 	// update
+	initializeSearchBox();
 	loadData();
 }
 
@@ -438,7 +483,8 @@ function moveUp(moveItem) {
 			
 			var itemDiv = $(moveItem).parent();
 			itemDiv.prev().before(itemDiv);
-			loadData();
+			
+			initializeSearchBox();
 			return;
         }
     }
@@ -456,7 +502,8 @@ function moveDown(moveItem) {
 			
 			var itemDiv = $(moveItem).parent();
 			itemDiv.next().after(itemDiv);
-			loadData();
+			
+			initializeSearchBox();
 			return;
         }
     }
