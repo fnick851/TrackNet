@@ -69,11 +69,11 @@ function categoryView() {
 }
 
 function runMain() {
-	d3.json("domainCategoryDict.json", function(error, json) {
+	d3.json("../data/domainCategoryDict.json", function(error, json) {
 		if (error) return alert("Error loading categories: " + error);
 		categories = json;
 		
-		d3.json("257.data.json", function(error, json) {
+		d3.json("../data/257.data.json", function(error, json) {
 		if (error) return alert("Error loading data: " + error);
 			td = json;
 			initializeCategories();
