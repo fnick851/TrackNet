@@ -143,29 +143,42 @@ function initializeCategories() {
 	if (curSearch == 1) {
 		// searching by category
 		for (var key in thirdparty) {
-			if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
-				if (clist[thirdparty[key].category] == null)
-					clist[thirdparty[key].category] = 1;
-				else
-					clist[thirdparty[key].category]++;
-			}
+			//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (clist[thirdparty[key].category] == null) {
+					clist[thirdparty[key].category] = {};
+					clist[thirdparty[key].category][thirdparty[key].uid] = 1;
+				} else //if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
+					clist[thirdparty[key].category][thirdparty[key].uid] = 1;
+				//} else { // count each tracker, not just each visit
+				//	clist[thirdparty[key].category][thirdparty[key].uid]++;
+				//}
+			//}
 		}
 	} else {
 		// searching by websites
 		for (var key in thirdparty) {
-			if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
-				if (clist[thirdparty[key].domain] == null)
-					clist[thirdparty[key].domain] = 1;
-				else
-					clist[thirdparty[key].domain]++;
-			}
+			//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (clist[thirdparty[key].domain] == null) {
+					clist[thirdparty[key].domain] = {};
+					clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
+				} else //if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
+					clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
+				//} else { // count each tracker, not just each visit
+				//	clist[thirdparty[key].domain][thirdparty[key].uid]++;
+				//}
+			//}
 		}
 	}
 	
-	// convert into tuples to sort descending by count
+	// tally up + convert into tuples to sort descending by count
 	var tuples = [];
-	for (var key in clist)
-		tuples.push([key, clist[key]]);
+	for (var key in clist) {
+		var total = 0;
+		for (var visit in clist[key]) {
+			total += clist[key][visit];
+		}
+		tuples.push([key, total]);
+	}
 
 	tuples.sort(function(a, b) {
 		a = a[1];
@@ -381,9 +394,9 @@ function loadData() {
 				return colors(d.domain);
 			})
 		.attr('opacity', function(d) {
-				if (getDomain(d.uid) == d.domain) {
-					return 0; // do not show self-tracking
-				}
+				//if (getDomain(d.uid) == d.domain) {
+				//	return 0; // do not show self-tracking
+				//}
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
 		.append("svg:title")
