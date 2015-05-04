@@ -17,7 +17,7 @@ var categories;
 var x;
 var active_categories;
 var other_categories;
-var curView = 0; // website, 1 for category, 2 for tracking level + uid
+var curView = 2; // 0 for website, 1 for category, 2 for tracking level + uid
 var curSearch = 0; // website, 1 for category
 
 function websiteSearch() {
@@ -95,31 +95,9 @@ function runMain() {
 			thirdparty = td["third_party"];
 			thirdparty = addCategoriesToJson(thirdparty);
 			
-			/*
-			// combine third-party visits under same domain for single blocks
-			thirdparty = [];
-			var lastUid;
-			var lastDomain;
-			tp = {};
-			for (var key in thirdpartyOrig) {
-				if (thirdpartyOrig[key].uid == lastUid) {
-					if (!tp[thirdpartyOrig[key].domain])
-						tp[thirdpartyOrig[key].domain] = thirdpartyOrig[key];
-					tp[thirdpartyOrig[key].domain].has_cookie |= thirdpartyOrig[key].has_cookie;
-				} else {
-					for (var t in tp) {
-						thirdparty.push(tp[t]);
-					}
-					tp = {};
-					lastUid = thirdpartyOrig[key].uid;
-					lastDomain = thirdpartyOrig[key].domain;
-				}
-			}
-			*/
-			
 			initializeCategories();
 			initializeSearchBox();
-			visualizeit();		  
+			visualizeit();
 		});
 	});
 }
@@ -407,11 +385,11 @@ function loadData() {
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
-		.append("svg:title")
+		//.append("svg:title")
 		.attr("data-tooltip", function(d) {
-			return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
-		})
-		.text(function(d) { return d.domain + "\n" + d.category; })
+				return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
+			})
+		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
 		
 	// qtip2 tooltips
@@ -422,7 +400,7 @@ function loadData() {
 		},
 		content: {
 			text: function(event, api) {
-				return $(this)[0].firstChild.firstChild.getAttribute('data-tooltip');
+				return $(this)[0].firstChild.getAttribute('data-tooltip');
 			}
 		},
 		position: {
