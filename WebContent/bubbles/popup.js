@@ -1,5 +1,17 @@
 d3.json("../data/851.adjacency.json", function(error, data) {
     completeData = data;
+
+    bubbleCenter = [245,245];
+    
+    boxTopLeft = [540,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
+    boxDimentions = [250,480,480];
+    trackerItemTopLeft = [boxTopLeft[0]+boxDimentions[0]*0.05,boxTopLeft[1]+70];
+    
+    p1ListTopLeft = [830,boxTopLeft[1]];
+    p1ListItemDimentions = [190,trackerItemHeight];
+    
+    svgDimentions = [p1ListTopLeft[0]+p1ListItemDimentions[0]+(boxDimentions[2]-boxDimentions[0]),490];
+    nextScreenX = svgDimentions[0]-(bubbleCenter[0]+centralBubbleRadius);
     
     if (document.cookie.length == 0) {
         var skipedCatIdDict = {};
@@ -32,7 +44,7 @@ d3.json("../data/851.adjacency.json", function(error, data) {
     
     svg.append("text")
        .attr("id", "resetBubbles")
-       .attr("y", 518)
+       .attr("y", svgDimentions[1]-2)
        .attr("font-size", 10)
        .style("pointer-events", "all")
        .text("[Reset Bubbles]")
@@ -44,6 +56,12 @@ d3.json("../data/851.adjacency.json", function(error, data) {
            loadData("domain" in pv ? domainId : categoryId);
            drawGraph();
        });
+    
+//    svg.append("rect")
+//       .attr("width", svgDimentions[0])
+//       .attr("height", svgDimentions[1])
+//       .attr("stroke", "black")
+//       .attr("fill", "none");
 });
 
 function getUrlVars()
