@@ -25,7 +25,7 @@ function websiteSearch() {
 	d3.select("#websearch").attr("class", "selected");
 	d3.select("#categorysearch").attr("class", "");
 	
-	initializeCategories();
+	//initializeCategories();
 	initializeSearchBox();
 	firstparty = addCategoriesToJson(firstparty);
 	loadData();
@@ -36,7 +36,7 @@ function categorySearch() {
 	d3.select("#categorysearch").attr("class", "selected");
 	d3.select("#websearch").attr("class", "");
 	
-	initializeCategories();
+	//initializeCategories();
 	initializeSearchBox();
 	firstparty = addCategoriesToJson(firstparty);
 	loadData();
@@ -130,9 +130,8 @@ function addCategoriesToJson(datalist) {
 }
 
 function initializeCategories() {
-	active_categories = [];
-	other_categories = [];
-	clist = {};
+	active_categories = {};
+	other_categories = {};
 	
 	firstparty = td["first_party"];
 	firstparty = addCategoriesToJson(firstparty);
@@ -140,60 +139,66 @@ function initializeCategories() {
 	thirdparty = td["third_party"];
 	thirdparty = addCategoriesToJson(thirdparty);
 	
-	if (curSearch == 1) {
-		// searching by category
-		for (var key in thirdparty) {
-			//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
-				if (clist[thirdparty[key].category] == null) {
-					clist[thirdparty[key].category] = {};
-					clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-				} else //if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
-					clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-				//} else { // count each tracker, not just each visit
-				//	clist[thirdparty[key].category][thirdparty[key].uid]++;
+	for (var searchType in [0,1]) {
+		clist = {};
+		active_categories[searchType] = [];
+		other_categories[searchType] = [];
+		if (searchType == 1) {
+			// searching by category
+			for (var key in thirdparty) {
+				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+					if (clist[thirdparty[key].category] == null) {
+						clist[thirdparty[key].category] = {};
+						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
+					} else //if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
+						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
+					//} else { // count each tracker, not just each visit
+					//	clist[thirdparty[key].category][thirdparty[key].uid]++;
+					//}
 				//}
-			//}
-		}
-	} else {
-		// searching by websites
-		for (var key in thirdparty) {
-			//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
-				if (clist[thirdparty[key].domain] == null) {
-					clist[thirdparty[key].domain] = {};
-					clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-				} else //if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
-					clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-				//} else { // count each tracker, not just each visit
-				//	clist[thirdparty[key].domain][thirdparty[key].uid]++;
-				//}
-			//}
-		}
-	}
-	
-	// tally up + convert into tuples to sort descending by count
-	var tuples = [];
-	for (var key in clist) {
-		var total = 0;
-		for (var visit in clist[key]) {
-			total += clist[key][visit];
-		}
-		tuples.push([key, total]);
-	}
-
-	tuples.sort(function(a, b) {
-		a = a[1];
-		b = b[1];
-		return a < b ? 1 : (a > b ? -1 : 0);
-	});
-
-	for (var i = 0; i < tuples.length; i++) {
-		var key = tuples[i][0];
-		var value = tuples[i][1];
-		
-		if (i < 5) { // top N categories display by default
-			active_categories.push({value:key, data:value, enabled:false});
+			}
 		} else {
-			other_categories.push({value:key, data:value, enabled:false});
+			// searching by websites
+			for (var key in thirdparty) {
+				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+					if (clist[thirdparty[key].domain] == null) {
+						clist[thirdparty[key].domain] = {};
+						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
+					} else //if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
+						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
+					//} else { // count each tracker, not just each visit
+					//	clist[thirdparty[key].domain][thirdparty[key].uid]++;
+					//}
+				//}
+			}
+		}
+		
+		// tally up + convert into tuples to sort descending by count
+		var tuples = [];
+		
+		for (var key in clist) {
+			var total = 0;
+			for (var visit in clist[key]) {
+				total += clist[key][visit];
+			}
+			tuples.push([key, total]);
+		}
+
+		tuples.sort(function(a, b) {
+			a = a[1];
+			b = b[1];
+			return a < b ? 1 : (a > b ? -1 : 0);
+		});
+		
+		for (var i = 0; i < tuples.length; i++) {
+			var key = tuples[i][0];
+			var value = tuples[i][1];
+			
+			if (i < 5) { // top N categories display by default
+				active_categories[searchType].push({value:key, data:value, enabled:false});
+			} else {
+				other_categories[searchType].push({value:key, data:value, enabled:false});
+			}
 		}
 	}
 }
@@ -208,19 +213,19 @@ function initializeSearchBox() {
 		$('#autocomplete').attr("placeholder", "Search for website");
 	
 	var unionTotal = 0;
-	for(var i = 0; i < active_categories.length; i++)
+	for(var i = 0; i < active_categories[curSearch].length; i++)
 	{
 		var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
-			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
+			'<span class="item_name">' + active_categories[curSearch][i].value + '</span> <span class="separator">|</span> ' +
+			'<i><span class="item_percent">' + active_categories[curSearch][i].data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			'</div>';
 
 		$('#active_categories').append(html);
 		
-		unionTotal += active_categories[i].data;
+		unionTotal += active_categories[curSearch][i].data;
 	}
 	
 	// add union row label
@@ -234,7 +239,7 @@ function initializeSearchBox() {
 	// setup autocomplete function pulling from categories[] array
 	$('#autocomplete').autocomplete({
 		minLength: 0,
-		lookup: other_categories,
+		lookup: other_categories[curSearch],
 		onSelect: function (item) {
 			var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
@@ -247,12 +252,12 @@ function initializeSearchBox() {
 			$('#active_categories').append(html);
 			document.getElementById('autocomplete').value = '';
 
-			for (var i = 0; i < other_categories.length; i++) {
-				if (other_categories[i].value == item.value)
-					other_categories.splice(i, 1);
+			for (var i = 0; i < other_categories[curSearch].length; i++) {
+				if (other_categories[curSearch][i].value == item.value)
+					other_categories[curSearch].splice(i, 1);
 			}
 
-			active_categories.push(item);
+			active_categories[curSearch].push(item);
 			$(document).trigger('click');
 			
 			// update
@@ -264,8 +269,8 @@ function initializeSearchBox() {
 
 function getCategoryList(datalist) {
 	cats = [];
-	for (i=0;i<active_categories.length;i++){
-		cats.push(active_categories[i]["value"]);
+	for (i=0;i<active_categories[curSearch].length;i++){
+		cats.push(active_categories[curSearch][i]["value"]);
 	}
 	return cats;
 }
@@ -455,16 +460,16 @@ function remove_active_item(remove_item)
     $(remove_item).parent().remove();
     
 
-    for (var i = 0; i < active_categories.length; i++) 
+    for (var i = 0; i < active_categories[curSearch].length; i++) 
     {
-        if (active_categories[i].value == item_value) 
+        if (active_categories[curSearch][i].value == item_value) 
         {
-            item = active_categories[i];
-            active_categories.splice(i, 1);
+            item = active_categories[curSearch][i];
+            active_categories[curSearch].splice(i, 1);
         }
     }
 
-    other_categories.push(item);
+    other_categories[curSearch].push(item);
 	
 	// update
 	initializeSearchBox();
@@ -474,12 +479,12 @@ function remove_active_item(remove_item)
 function moveUp(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().html();
     
-	for (var i = 1; i < active_categories.length; i++)  {
-		if (active_categories[i].value == item_value)  {
-			var item = active_categories[i];
-			var prev = active_categories[i-1];
-			active_categories[i-1] = item;
-			active_categories[i] = prev;
+	for (var i = 1; i < active_categories[curSearch].length; i++)  {
+		if (active_categories[curSearch][i].value == item_value)  {
+			var item = active_categories[curSearch][i];
+			var prev = active_categories[curSearch][i-1];
+			active_categories[curSearch][i-1] = item;
+			active_categories[curSearch][i] = prev;
 			
 			var itemDiv = $(moveItem).parent();
 			itemDiv.prev().before(itemDiv);
@@ -494,12 +499,12 @@ function moveUp(moveItem) {
 function moveDown(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().prev().html();
     
-	for (var i = 0; i < active_categories.length-1; i++)  {
-		if (active_categories[i].value == item_value)  {
-			var item = active_categories[i];
-			var next = active_categories[i+1];
-			active_categories[i+1] = item;
-			active_categories[i] = next;
+	for (var i = 0; i < active_categories[curSearch].length-1; i++)  {
+		if (active_categories[curSearch][i].value == item_value)  {
+			var item = active_categories[curSearch][i];
+			var next = active_categories[curSearch][i+1];
+			active_categories[curSearch][i+1] = item;
+			active_categories[curSearch][i] = next;
 			
 			var itemDiv = $(moveItem).parent();
 			itemDiv.next().after(itemDiv);
