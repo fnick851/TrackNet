@@ -47,8 +47,8 @@ function websiteView() {
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
-		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
 		return d3.ascending(a.domain+aTracking,
 							b.domain+bTracking);
 	});
@@ -60,10 +60,10 @@ function categoryView() {
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
-		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
-		return d3.ascending(a.category+a.domain+aTracking,
-							b.category+b.domain+bTracking);
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		return d3.ascending(a.category+aTracking+a.domain,
+							b.category+bTracking+b.domain);
 	});
 	loadData();
 }
@@ -95,8 +95,8 @@ function isTracked(domainId) {
 	for (i=0;i<thirdparty.length;i++) {
 		if (thirdparty[i]['uid'] == domainId)
 			return true;
-		else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
-			return false;
+		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
+		//	return false;
 	}
 	return false;
 }
@@ -116,8 +116,8 @@ function hasCookie(domainId) {
 	for (i=0;i<thirdparty.length;i++) {
 		if (thirdparty[i]['uid'] == domainId && thirdparty[i]['has_cookie'] == 1)
 			return true;
-		else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
-			return false;
+		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
+		//	return false;
 	}
 	return false;
 }
@@ -296,9 +296,10 @@ function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
+	var totalWidth = width*firstparty.length+offset;
 	var totalHeight = initHeight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
-		.attr('width', width*firstparty.length+offset)
+		.attr('width', totalWidth)
 		.attr('height', totalHeight);
 	
 	// reset
@@ -367,9 +368,16 @@ function loadData() {
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
-				if (d.category != lastCat) {
-					categoryDivs.push(x);
-					lastCat = d.category;
+				if (curView == 1) {
+					if (d.category != lastCat) {
+						categoryDivs.push({'name':d.category, 'pos':x});
+						lastCat = d.category;
+					}
+				} else {
+					if (d.domain != lastCat) {
+						categoryDivs.push({'name':d.domain, 'pos':x});
+						lastCat = d.domain;
+					}
 				}
 				return x;
 			})
@@ -417,7 +425,7 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+				return (d['has_cookie'] == 1)?cookieColor:trackedColor;
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
@@ -457,15 +465,34 @@ function loadData() {
 		.text(function(d) { return d.domain; })
 		;
 	
-	// draw category divisions
-	root.selectAll("rect#catDiv").data(categoryDivs).enter()
+	// draw category divisions and labels
+	root.selectAll("g#catDiv").data(categoryDivs).enter()
 		.append("rect")
-		.attr('x', function(d) { return d; } )
+		.attr('x', function(d) { return d.pos; })
 		.attr('y', padding)
 		.attr('width', 1)
 		.attr('height', totalHeight)
 		.attr('fill', "#000")
 		;
+	
+	// center labels
+	/*categoryDivs.push({'pos':totalWidth});
+	console.log(categoryDivs);
+	normalizedDivs = [];
+	for (var i = 0; i < categoryDivs.length-1; i++) {
+		newx = (categoryDivs[i].pos + categoryDivs[i+1].pos) / 2;
+		normalizedDivs.push({'name':categoryDivs[i].name, 'pos':newx});
+	}
+	console.log(normalizedDivs);
+	root.selectAll("g#catLabels").data(categoryDivs).enter()
+		.append("text")
+		.attr('x', function(d) { return d.pos; })
+		.attr('y', padding/2)
+		.attr('fill', "#0f0")
+		.attr('transform', function(d) { return 'rotate(-80,'+ d.pos+', '+(padding+initHeight)+')'; })
+		.text(function(d) { return d.name })
+		;
+	*/
 }
 
 function remove_active_item(remove_item)
