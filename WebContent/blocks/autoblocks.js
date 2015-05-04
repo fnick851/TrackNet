@@ -17,7 +17,7 @@ var categories;
 var x;
 var active_categories;
 var other_categories;
-var curView = 0; // website, 1 for category
+var curView = 0; // website, 1 for category, 2 for tracking level + uid
 var curSearch = 0; // website, 1 for category
 
 function websiteSearch() {
@@ -42,6 +42,7 @@ function websiteView() {
 	curView = 0;
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
+	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
 		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
 		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
@@ -55,11 +56,26 @@ function categoryView() {
 	curView = 1;
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
+	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
 		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
 		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
 		return d3.ascending(a.category+aTracking+a.domain,
 							b.category+bTracking+b.domain);
+	});
+	loadData();
+}
+
+function orderView() {
+	curView = 2;
+	d3.select("#webview").attr("class", "");
+	d3.select("#categoryview").attr("class", "");
+	d3.select("#orderview").attr("class", "selected");
+	firstparty = firstparty.sort(function(a,b) {
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		return d3.ascending(aTracking+a.uid,
+							bTracking+b.uid);
 	});
 	loadData();
 }
@@ -303,8 +319,10 @@ function getHeightForCat(step, category, categoryList) {
 function visualizeit() {
 	if (curView == 0)
 		websiteView();
-	else
+	else if (curView == 1)
 		categoryView();
+	else if (curView == 2)
+		orderView();
 }
 
 function loadData() {
@@ -388,15 +406,21 @@ function loadData() {
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
-				if (curView == 1) {
+				if (curView == 0) {
+					if (d.domain != lastCat) {
+						categoryDivs.push({'name':d.domain, 'pos':x});
+						lastCat = d.domain;
+					}
+				} else if (curView == 1) {
 					if (d.category != lastCat) {
 						categoryDivs.push({'name':d.category, 'pos':x});
 						lastCat = d.category;
 					}
-				} else {
-					if (d.domain != lastCat) {
-						categoryDivs.push({'name':d.domain, 'pos':x});
-						lastCat = d.domain;
+				} else if (curView == 2) {
+					trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					if (trackingLevel != lastCat) {
+						categoryDivs.push({'name':trackingLevel, 'pos':x});
+						lastCat = trackingLevel;
 					}
 				}
 				return x;
