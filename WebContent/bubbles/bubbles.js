@@ -36,13 +36,14 @@ var p1ListTopLeft = [850,boxTopLeft[1]];
 var p1ListItemDimentions = [190,trackerItemHeight];
 var p1ListVisibleCapacity = boxVisibleCapacity;
 
-var nextScreenX = 1000;
+var nextScreenX = p1ListTopLeft[0]+p1ListItemDimentions[0];
+var svgDimentions = [nextScreenX+bubbleCenter[0]+centralBubbleRadius,520];
 
 function init(selector, vtype, uc) {
     svg = d3.select(selector)
             .append("svg")
-            .attr("width", 1300)
-            .attr("height", 520);
+            .attr("width", svgDimentions[0])
+            .attr("height", svgDimentions[1]);
     viewType = vtype;
     drawTimeline();
     useCookie = uc;

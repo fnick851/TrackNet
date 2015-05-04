@@ -64,11 +64,9 @@ d3.json("../data/851.adjacency.json", function(error, data) {
         }
     });
     
-    svg.append("rect")
-       .attr("width", 1)
-       .attr("height", 1);
-    svg.append("rect")
-       .attr("y", 519)
-       .attr("width", 1)
-       .attr("height", 1);
+//    svg.append("rect")
+//       .attr("width", svgDimentions[0])
+//       .attr("height", svgDimentions[1])
+//       .attr("stroke", "black")
+//       .attr("fill", "none");
 });
