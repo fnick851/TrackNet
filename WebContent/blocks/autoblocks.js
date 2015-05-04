@@ -1,8 +1,8 @@
 // display variables
-var width=3;		// width of each block
+var width=4;		// width of each block
 var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
-var initheight=40; 	// search form height
+var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
 var trackedColor = 0.7; // opacity coding
 var cookieColor = 1.0;
@@ -276,7 +276,7 @@ function getCategoryList(datalist) {
 }
 
 function getHeightForCat(step, category, categoryList) {
-	h = initheight-step+padding;
+	h = initHeight-step+padding;
 	for (i=0;i<categoryList.length;i++) {
 		if (categoryList[i] == category)
 			return h;
@@ -286,7 +286,6 @@ function getHeightForCat(step, category, categoryList) {
 }
 
 function visualizeit() {
-// previously: store firstparty/thirdparty vars,add categories, sort
 	if (curView == 0)
 		websiteView();
 	else
@@ -297,7 +296,7 @@ function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
-	var totalHeight = initheight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
+	var totalHeight = initHeight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length+offset)
 		.attr('height', totalHeight);
@@ -305,6 +304,8 @@ function loadData() {
 	// reset
 	x = offset;
 	xpos = {};
+	var categoryDivs = [];
+	var lastCat;
 	root.selectAll("g").data(firstparty).enter()
 		.append("g")
 		.on("mouseover", function() {
@@ -328,7 +329,7 @@ function loadData() {
 					.duration(200)
 					.style("opacity", .9)
 					.style("left", divx + "px")
-					.style("top", initheight+height/2 + "px");
+					.style("top", initHeight+height/2 + "px");
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
@@ -366,11 +367,15 @@ function loadData() {
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
+				if (d.category != lastCat) {
+					categoryDivs.push(x);
+					lastCat = d.category;
+				}
 				return x;
 			})
 		.attr('y', padding)
 		.attr('width', width)
-		.attr('height', initheight)
+		.attr('height', initHeight)
 		.attr('fill', function(d) {
 				/*
 				if (curSearch == 1)
@@ -450,6 +455,16 @@ function loadData() {
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
+		;
+	
+	// draw category divisions
+	root.selectAll("rect#catDiv").data(categoryDivs).enter()
+		.append("rect")
+		.attr('x', function(d) { return d; } )
+		.attr('y', padding)
+		.attr('width', 1)
+		.attr('height', totalHeight)
+		.attr('fill', "#000")
 		;
 }
 
