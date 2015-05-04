@@ -76,9 +76,10 @@ function runMain() {
 			firstparty = td["first_party"];
 			firstparty = addCategoriesToJson(firstparty);
 			
-			thirdpartyOrig = td["third_party"];
-			thirdpartyOrig = addCategoriesToJson(thirdpartyOrig);
+			thirdparty = td["third_party"];
+			thirdparty = addCategoriesToJson(thirdparty);
 			
+			/*
 			// combine third-party visits under same domain for single blocks
 			thirdparty = [];
 			var lastUid;
@@ -98,6 +99,7 @@ function runMain() {
 					lastDomain = thirdpartyOrig[key].domain;
 				}
 			}
+			*/
 			
 			initializeCategories();
 			initializeSearchBox();
@@ -419,6 +421,8 @@ function loadData() {
 		;
 	
 	// add individual blocks for third-party
+	blocklist = {};
+	unionlist = {};
 	x = offset;
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
@@ -443,7 +447,34 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				return (d['has_cookie'] == 1)?cookieColor:trackedColor;
+				unionlist[d.uid] |= d.has_cookie;
+				if (curSearch == 0) {
+					if (!(d.uid + d.domain in blocklist)) {
+						// color in the first time
+						blocklist[d.uid + d.domain] = d.has_cookie;
+						return (d['has_cookie'] == 1)?cookieColor:trackedColor;
+					} else if (d.has_cookie == 1) {
+						// or if it's tracked by cookie
+						blocklist[d.uid + d.domain] = 1;
+						return cookieColor;
+					} else {
+						// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
+						return 0;
+					}
+				} else {
+					if (!(d.uid + d.category in blocklist)) {
+						// color in the first time
+						blocklist[d.uid + d.category] = d.has_cookie;
+						return (d.has_cookie == 1)?cookieColor:trackedColor;
+					} else if (blocklist[d.uid + d.category] == 1) {
+						// or if it's tracked by cookie
+						return cookieColor;
+					} else {
+						// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
+						return 0;
+					}
+				}
+				//return (d['has_cookie'] == 1)?cookieColor:trackedColor;
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
@@ -452,6 +483,7 @@ function loadData() {
 	// add 'union' row at bottom
 	x = offset;
 	y = height+width;
+	blocklist = {};
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
 		.attr('x', function(d) {
@@ -477,7 +509,21 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+				var trackVal = unionlist[d.uid];
+				origHeight = -100;
+				if (curSearch == 1)
+					origHeight = getHeightForCat(height, d.category, categoryList);
+				else
+					origHeight = getHeightForCat(height, d.domain, categoryList);
+				if (origHeight != -100)
+				{
+					unionlist[d.uid] = -1;
+					if (trackVal == 1)
+						return cookieColor;
+					else if (trackVal == 0)
+						return trackedColor;
+				}
+				return 0;
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
