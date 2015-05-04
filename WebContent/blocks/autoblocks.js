@@ -4,7 +4,7 @@ var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
 var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
-var trackedColor = 0.7; // opacity coding
+var trackedColor = 0.6; // opacity coding
 var cookieColor = 1.0;
 var untrackedColor = 0.3;
 var colors = d3.scale.category10();
@@ -25,9 +25,7 @@ function websiteSearch() {
 	d3.select("#websearch").attr("class", "selected");
 	d3.select("#categorysearch").attr("class", "");
 	
-	//initializeCategories();
 	initializeSearchBox();
-	firstparty = addCategoriesToJson(firstparty);
 	loadData();
 }
 
@@ -36,9 +34,7 @@ function categorySearch() {
 	d3.select("#categorysearch").attr("class", "selected");
 	d3.select("#websearch").attr("class", "");
 	
-	//initializeCategories();
 	initializeSearchBox();
-	firstparty = addCategoriesToJson(firstparty);
 	loadData();
 }
 
@@ -76,12 +72,35 @@ function runMain() {
 		d3.json("../data/257.data.json", function(error, json) {
 		if (error) return alert("Error loading data: " + error);
 			td = json;
-			initializeCategories();
-			initializeSearchBox();
 			
 			firstparty = td["first_party"];
-			thirdparty = td["third_party"];
 			firstparty = addCategoriesToJson(firstparty);
+			
+			thirdpartyOrig = td["third_party"];
+			thirdpartyOrig = addCategoriesToJson(thirdpartyOrig);
+			
+			// combine third-party visits under same domain for single blocks
+			thirdparty = [];
+			var lastUid;
+			var lastDomain;
+			tp = {};
+			for (var key in thirdpartyOrig) {
+				if (thirdpartyOrig[key].uid == lastUid) {
+					if (!tp[thirdpartyOrig[key].domain])
+						tp[thirdpartyOrig[key].domain] = thirdpartyOrig[key];
+					tp[thirdpartyOrig[key].domain].has_cookie |= thirdpartyOrig[key].has_cookie;
+				} else {
+					for (var t in tp) {
+						thirdparty.push(tp[t]);
+					}
+					tp = {};
+					lastUid = thirdpartyOrig[key].uid;
+					lastDomain = thirdpartyOrig[key].domain;
+				}
+			}
+			
+			initializeCategories();
+			initializeSearchBox();
 			visualizeit();		  
 		});
 	});
@@ -132,12 +151,6 @@ function addCategoriesToJson(datalist) {
 function initializeCategories() {
 	active_categories = {};
 	other_categories = {};
-	
-	firstparty = td["first_party"];
-	firstparty = addCategoriesToJson(firstparty);
-	
-	thirdparty = td["third_party"];
-	thirdparty = addCategoriesToJson(thirdparty);
 	
 	for (var searchType in [0,1]) {
 		clist = {};
@@ -356,6 +369,11 @@ function loadData() {
 				}
 				
 				selectedBlock = d3.select(this);
+				
+				var xoffset = d3.select("svg")[0][0].scrollLeft;
+				console.log(xoffset); // nope
+				console.log(selectedBlock.data()[0].uid); // yes
+				
 				selectedBlock.append("rect")
 					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
 					.attr('y', padding)
