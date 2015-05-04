@@ -345,43 +345,10 @@ function loadData() {
 		.on("mouseover", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 0.5);
-				var details = d3.select("#details");
-				details.selectAll('p').remove();
-				details.append('p')
-					.append("a")
-					.attr("href", "#")
-					.text(block.data()[0].domain)
-					.attr("class", "domain");
-				details.append('p')
-					.append("a")
-					.attr("href", "#")
-					.text(block.data()[0].category)
-					.attr("class", "category");	
-				
-				var divx = parseInt(block.select("rect").attr("x")) + 275; // div offset - 1/2 tooltip width
-				details.transition()
-					.duration(200)
-					.style("opacity", .9)
-					.style("left", divx + "px")
-					.style("top", initHeight+height/2 + "px");
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
-				var details = d3.select("#details");
-				details.selectAll('p').remove();
-				details.transition()
-					.duration(200)
-					.style("opacity", 0);
-				
-				if (selectedBlock != null) {
-					details.append('p')
-						.text(selectedBlock.data()[0].domain)
-						.attr("class", "domain");
-					details.append('p')
-						.text(selectedBlock.data()[0].category)
-						.attr("class", "category");
-				}
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {
@@ -440,9 +407,33 @@ function loadData() {
 		.attr('opacity', function(d) {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
-		//.append("svg:title")
-		//.text(function(d) { return d.domain; })
+		.append("svg:title")
+		.attr("data-tooltip", function(d) {
+			return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
+		})
+		.text(function(d) { return d.domain + "\n" + d.category; })
 		;
+		
+	// qtip2 tooltips
+	$('g').qtip({
+		hide: {
+			delay: 100,
+			fixed: true
+		},
+		content: {
+			text: function(event, api) {
+				return $(this)[0].firstChild.firstChild.getAttribute('data-tooltip');
+			}
+		},
+		position: {
+			my: 'top center',
+			at: 'bottom center'
+		},
+		style: {
+			classes: 'qtip-light qtip-rounded customqtip'
+		},
+		tip: true
+	});
 	
 	// add individual blocks for third-party
 	blocklist = {};

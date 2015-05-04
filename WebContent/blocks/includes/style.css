@@ -298,3 +298,11 @@ p {
 	border-radius: 10px;
     margin-left:5px;
 }
+
+.customqtip  .qtip-content {
+	text-align:center;
+}
+.customqtip  .qtip-content a {
+	text-decoration:none;
+	line-height:1.5em;
+}
