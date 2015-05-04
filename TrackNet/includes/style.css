@@ -235,7 +235,7 @@ p {
   font: 12px sans-serif;
   background: lightsteelblue;
   border: 0px;
-  border-radius: 8px;
+  border-radius: 2px;
 }
 
 .tooltip p {
@@ -361,4 +361,20 @@ header
 {
     margin-left: 20px;
   margin-top: 4px;
+}
+
+#details
+{
+  opacity: 0;
+}
+
+#details:hover
+{
+  opacity: 0.9;
+}
+
+#main_container
+{
+  margin-left: auto;
+  margin-right: auto;
 }

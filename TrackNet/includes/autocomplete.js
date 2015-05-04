@@ -121,3 +121,15 @@ function activate_1p_web_tab()
     $('#website_selector_tab_1p').addClass('ui-tabs-active');
     $('#website_selector_tab_1p').addClass('ui-state-active');
 }
+
+$(function() {
+
+   $("#chart").mousewheel(function(event, delta) {
+
+      this.scrollLeft -= (delta * 30);
+        console.log(this.scrollLeft);
+      event.preventDefault();
+
+   });
+
+});

@@ -13,6 +13,7 @@
     <script type="text/javascript" src="libs/jquery-ui.js"></script>
     <script type="text/javascript" src="libs/jquery.autocomplete.js"></script>
     <script type="text/javascript" src="libs/jquery.colorbox.js"></script>
+    <script type="text/javascript" src="libs/jquery.mousewheel.js"></script>
 
     <script type="text/javascript" src="includes/autocomplete.js"></script>
     <script type="text/javascript" src="includes/autoblocks.js"></script>  
@@ -23,34 +24,37 @@
         <img src="./includes/logo.png"/ id="logo">
     </header>    
 
-<div id="tabs_thirdparty">
-    <ul>
-        <li id="website_selector_tab_3p"><a href="#website_selector" onclick="websiteSearch();activate_3p_web_tab();"><span>Websites</span></a></li>
-        <li id="category_selector_tab_3p"><a href="#category_selector" onclick="categorySearch();activate_3p_cat_tab();"><span>Categories</span></a></li>
-    </ul>
-    <div id="searchbox_container">
-        <div id="searchfield">
-            <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for website" onclick="$('#autocomplete').autocomplete('search', '');"></form>
-        </div>
-        <div id="active_categories"></div>
-    </div>
-    </div>
-</div>
+<div id="main_container">
+  <div id="tabs_thirdparty">
+      <ul>
+          <li id="website_selector_tab_3p"><a href="#website_selector" onclick="websiteSearch();activate_3p_web_tab();"><span>Websites</span></a></li>
+          <li id="category_selector_tab_3p"><a href="#category_selector" onclick="categorySearch();activate_3p_cat_tab();"><span>Categories</span></a></li>
+      </ul>
+      <div id="searchbox_container">
+          <div id="searchfield">
+              <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for website" onclick="$('#autocomplete').autocomplete('search', '');"></form>
+          </div>
+          <div id="active_categories"></div>
+      </div>
+  </div>
 
-<div id="tabs_firstparty">
-  <ul>
-    <li id="website_selector_tab_1p"><a href="#website_selector" onclick="websiteView();activate_1p_web_tab();"><span>Websites</span></a></li>
-    <li id="category_selector_tab_1p"><a href="#category_selector" onclick="categoryView();activate_1p_cat_tab();"><span>Categories</span></a></li>
-  </ul>
-  <div id="chartholder">
-    <div id="chart"></div>
-    <div id="details" class="tooltip" style="opacity:0">
-      <p class="tooltip_domain">
-        <a href="#">domain</a>
-      </p>
-      <p class="tooltip_category">
-        <a href="#">category</a>
-      </p>
+  <div id="tabs_firstparty">
+    <ul>
+      <li id="website_selector_tab_1p"><a href="#website_selector" onclick="websiteView();activate_1p_web_tab();"><span>Websites</span></a></li>
+      <li id="category_selector_tab_1p"><a href="#category_selector" onclick="categoryView();activate_1p_cat_tab();"><span>Categories</span></a></li>
+    </ul>
+    <div id="chartholder">
+      <div id="chart"></div>
+      <div id="details" class="tooltip" style="opacity:0" onmouseleave="hide_tooltip();">
+        <script>
+              $(document).ready(function(){
+                  $(".iframe").colorbox({iframe:true, width:"90%", height:"90%", closeButton: false});
+              });
+          </script>
+          <p><a class='iframe' id="domain_link" href="#">Domain</a></p>
+          <hr style="margin: 0;"></hr>
+          <p><a class='iframe' id="category_link" href="#">Category</a></p>
+      </div>
     </div>
   </div>
 </div>
@@ -199,54 +203,4 @@ $( "#tabs_firstparty" ).tabs();
     });
   });
   </script>
-<!--
-    <div id="tabs">
-        <div id="thirdparty">
-            <span>Search For:</span>
-            <ul>
-                <li><a href="#" onclick="websiteSearch()" id="websearch" class="selected">Website</a></li>
-                <li><a href="#" onclick="categorySearch()" id="categorysearch">Category</a></li>
-            </ul>
-        </div>
-        <div id="firstparty">
-            <span>Sort By:</span>
-            <ul>
-                <li><a href="#" onclick="websiteView()" id="webview" class="selected">Website</a></li>
-                <li><a href="#" onclick="categoryView()" id="categoryview">Category</a></li>
-            </ul>
-        </div>
-    </div>
-
-//majeed - done
-
-    <div id="category_selector">
-        <div id="searchfield">
-            <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for website" onclick="$('#autocomplete').autocomplete('search', '');"></form>
-        </div>
-        <div id="active_categories"></div>
-    </div>
-    <div id="chartholder">
-        <div id="chart"></div>
-        <div id="details" class="tooltip" style="opacity:0">
-            <p class="tooltip_domain">
-                <a href="#">domain</a>
-            </p>
-            <p class="tooltip_category">
-                <a href="#">category</a>
-            </p>
-        </div>
-    </div>
--->    
-    
-    <div id="links">
-        <script>
-            $(document).ready(function(){
-                //Examples of how to assign the Colorbox event to elements
-                $(".iframe").colorbox({iframe:true, width:"90%", height:"90%", closeButton: false});
-            });
-        </script>
-        <p><a class='iframe' id="domain_link" href="#">Domain</a></p>
-        <p><a class='iframe' id="category_link" href="#">Category</a></p>
-    </div>
-
 </body>

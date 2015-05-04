@@ -148,7 +148,7 @@ function initializeCategories() {
 	
 	thirdparty = td["third_party"];
 	thirdparty = addCategoriesToJson(thirdparty);
-	
+
 	if (curSearch == 1) {
 		// searching by category
 		for (var key in thirdparty) {
@@ -200,9 +200,15 @@ function initializeCategories() {
 		var value = tuples[i][1];
 		
 		if (i < 5) { // top N categories display by default
-			active_categories.push({value:key, data:value, enabled:false});
+			if (curSearch == 1)
+				active_categories.push({value:key, data:value, enabled:false, is_category: true});
+			else
+				active_categories.push({value:key, data:value, enabled:false, is_category: false});
 		} else {
-			other_categories.push({value:key, data:value, enabled:false});
+			if (curSearch == 1)
+				other_categories.push({value:key, data:value, enabled:false, is_category: true});
+			else
+				other_categories.push({value:key, data:value, enabled:false, is_category: false});
 		}
 	}
 }
@@ -220,8 +226,14 @@ function initializeSearchBox() {
 	for(var i = 0; i < active_categories.length; i++)
 	{
 		var html = '<div class="active_category_item">' +
-			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + active_categories[i].value + '</span> <span class="separator">|</span> ' +
+			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>';
+
+			if(active_categories[i].is_category)
+				html += '<a class="item_name iframe" href=' +'bubbles/popup.html?category='+ id_list["catDict"][active_categories[i].value] + '>'
+			else
+				html += '<a class="item_name iframe" class="iframe" href=' +'bubbles/popup.html?domain='+ id_list["domainDict"][active_categories[i].value] + '>';
+
+			html += active_categories[i].value + '</a> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + active_categories[i].data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
@@ -246,8 +258,14 @@ function initializeSearchBox() {
 		lookup: other_categories,
 		onSelect: function (item) {
 			var html = '<div class="active_category_item">' +
-			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
+			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>';
+
+			if(item.is_category)
+				html += '<a class="item_name" class="iframe" href=' +'bubbles/popup.html?category='+ id_list["catDict"][item.value] + '>'
+			else
+				html += '<a class="item_name" class="iframe" href=' +'bubbles/popup.html?domain='+ id_list["domainDict"][item.value] + '>';
+
+			html += item.value + '</a> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
@@ -269,6 +287,8 @@ function initializeSearchBox() {
 			loadData();
 		}
     });
+
+	$(".iframe").colorbox({iframe:true, width:"90%", height:"90%", closeButton: false});
 }
 
 function getCategoryList(datalist) {
@@ -315,7 +335,7 @@ function loadData() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 0.5);
 				var details = d3.select("#details");
-				details.selectAll('p').remove();
+				/*details.selectAll('p').remove();
 				details.append('p')
 					.append("a")
 					.attr("href", "#")
@@ -325,42 +345,48 @@ function loadData() {
 					.append("a")
 					.attr("href", "#")
 					.text(block.data()[0].category)
-					.attr("class", "category");	
+					.attr("class", "category");	*/
+
+				$('#domain_link').html(block.data()[0].domain);
+				$('#domain_link').attr('href', 'bubbles/popup.html?domain=' + id_list["domainDict"][block.data()[0].domain]);
+
+				$('#category_link').html(block.data()[0].category);
+				$('#category_link').attr('href', 'bubbles/popup.html?category=' + id_list["catDict"][block.data()[0].category]);
 				
-				var divx = parseInt(block.select("rect").attr("x")) + 50; // div offset - 1/2 tooltip width
+				var divx = parseInt(block.select("rect").attr("x")) - 50 - chart.scrollLeft; // div offset - 1/2 tooltip width
 				details.transition()
 					.duration(200)
 					.style("opacity", .9)
 					.style("left", divx + "px")
-					.style("top", initheight+height/2 + "px");
+					.style("top", initheight+height/2 + 50 +"px");
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
 				var details = d3.select("#details");
-				details.selectAll('p').remove();
-				details.transition()
+				/*details.selectAll('p').remove();*/
+				/*details.transition()
 					.duration(200)
-					.style("opacity", 0);
+					.style("opacity", 0);*/
 				
-				if (selectedBlock != null) {
+				/*if (selectedBlock != null) {
 					details.append('p')
 						.text(selectedBlock.data()[0].domain)
 						.attr("class", "domain");
 					details.append('p')
 						.text(selectedBlock.data()[0].category)
 						.attr("class", "category");
-				}
+				}*/
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {
 					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[1]);
 
-					$('#domain_link').html(selectedBlock.data()[0].domain);
+					/*$('#domain_link').html(selectedBlock.data()[0].domain);
 					$('#domain_link').attr('href', 'bubbles/popup.html?domain=' + id_list["domainDict"][selectedBlock.data()[0].domain]);
 
 					$('#category_link').html(selectedBlock.data()[0].category);
-					$('#category_link').attr('href', 'bubbles/popup.html?category=' + id_list["catDict"][selectedBlock.data()[0].category]);
+					$('#category_link').attr('href', 'bubbles/popup.html?category=' + id_list["catDict"][selectedBlock.data()[0].category]);*/
 				}
 				
 				selectedBlock = d3.select(this);
@@ -522,4 +548,15 @@ function moveDown(moveItem) {
 			return;
         }
     }
+}
+
+function hide_tooltip()
+{
+
+	var details = d3.select('#details');
+	
+	details.transition()
+	.duration(200)
+	.style("opacity", 0);
+
 }
