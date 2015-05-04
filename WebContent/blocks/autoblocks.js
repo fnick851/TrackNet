@@ -303,6 +303,15 @@ function visualizeit() {
 		orderView();
 }
 
+function getStringWidth(string) { 
+    var text = d3.select("svg").append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .style("opacity", 0)
+        .text(string);
+	return text.node().getBBox().width;
+}
+
 function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
@@ -526,30 +535,31 @@ function loadData() {
 	root.selectAll("g#catDiv").data(categoryDivs).enter()
 		.append("rect")
 		.attr('x', function(d) { return d.pos; })
-		.attr('y', padding)
+		.attr('y', 0)
 		.attr('width', 1)
 		.attr('height', totalHeight)
 		.attr('fill', "#000")
 		;
 	
 	// center labels
-	/*categoryDivs.push({'pos':totalWidth});
-	console.log(categoryDivs);
-	normalizedDivs = [];
+	categoryDivs.push({'pos':totalWidth});
 	for (var i = 0; i < categoryDivs.length-1; i++) {
-		newx = (categoryDivs[i].pos + categoryDivs[i+1].pos) / 2;
-		normalizedDivs.push({'name':categoryDivs[i].name, 'pos':newx});
+		categoryDivs[i]['width'] = categoryDivs[i+1].pos - categoryDivs[i].pos;
 	}
-	console.log(normalizedDivs);
+	
 	root.selectAll("g#catLabels").data(categoryDivs).enter()
 		.append("text")
-		.attr('x', function(d) { return d.pos; })
-		.attr('y', padding/2)
-		.attr('fill', "#0f0")
-		.attr('transform', function(d) { return 'rotate(-80,'+ d.pos+', '+(padding+initHeight)+')'; })
-		.text(function(d) { return d.name })
+		.attr('x', function(d) { return d.pos + 2; })
+		.attr('y', padding*3/4)
+		.attr('fill', "#000")
+		.text(function(d) {
+			txtwidth = getStringWidth(d.name);
+			if (txtwidth < d.width)
+				return d.name;
+			else
+				return '';
+		})
 		;
-	*/
 }
 
 function remove_active_item(remove_item)
