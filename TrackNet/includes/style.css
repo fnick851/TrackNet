@@ -65,7 +65,7 @@ p {
 }
 
 #autocomplete{
-  width: 275px;
+  width: 300px;
   height: 30px;
   padding: 0 10px 0 10px;
   background-color: #fff;
@@ -73,7 +73,7 @@ p {
   border-radius: 3px;
   color: #aeaeae;
   font-weight:normal;
-  font-size: 1.3em;
+  font-size: 1.15em;
   -webkit-transition: all 0.2s linear;
   -moz-transition: all 0.2s linear;
   transition: all 0.2s linear;
@@ -128,7 +128,7 @@ p {
 
 .active_category_item
 {
-    width: 250px;
+    width: 275px;
     padding: 2px;
     margin: 3px;
     background-color: #eee;
@@ -145,10 +145,10 @@ p {
 
 .active_category_item .item_name
 {
-    font-size: 1.3em;
+    font-size: 1em;
     padding: 3px;
-}
 
+}
 .active_category_item .item_percent
 {
     font-size: 1.2em;
@@ -216,7 +216,8 @@ p {
 
 #chartholder, #tabs #firstparty
 {
-  margin-left:300px;
+  
+  float: left;
 }
 #chart
 {
@@ -315,4 +316,49 @@ header
 .domain
 {
   z-index: 1;
+}
+
+#tabs_firstparty
+{
+  width: 755px;
+  font-size: 12px;
+  float: left;
+  margin: 12px 12px 12px 0;
+}
+
+#tabs_thirdparty
+{
+  width: 350px;
+  font-size: 12px;
+  float: left;
+  margin: 12px;
+}
+
+
+/* Specific checkbox widget styles */
+.ui-checkbox {
+    font-size: 0.75em;
+    margin: 0.6em;
+}
+
+  .custom-combobox {
+    position: relative;
+    display: inline-block;
+  }
+  .custom-combobox-toggle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    margin-left: -1px;
+    padding: 0;
+  }
+  .custom-combobox-input {
+    margin: 0;
+    padding: 5px 10px;
+  }
+
+#searchbox_container
+{
+    margin-left: 20px;
+  margin-top: 4px;
 }
