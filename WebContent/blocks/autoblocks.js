@@ -484,24 +484,26 @@ function loadData() {
 				} else {
 					thirdPartyCategory = d.domain;
 				}
+				
+				// initialize percent list if needed
 				firstPartyCategory = getFirstPartyCategory(d.uid);
 				h = d.ypos;
-				if (thirdPartyCategory in percentlist) {
-					if (firstPartyCategory in percentlist[thirdPartyCategory]) {
-						percentlist[thirdPartyCategory][firstPartyCategory].height = h;
-						percentlist[thirdPartyCategory][firstPartyCategory].color = colors(thirdPartyCategory);
+				if (firstPartyCategory in percentlist) {
+					if (thirdPartyCategory in percentlist[firstPartyCategory]) {
+						percentlist[firstPartyCategory][thirdPartyCategory].height = h;
+						percentlist[firstPartyCategory][thirdPartyCategory].color = colors(thirdPartyCategory);
 					} else
-						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
+						percentlist[firstPartyCategory][thirdPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				} else {
-					percentlist[thirdPartyCategory] = {};
-					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
+					percentlist[firstPartyCategory] = {};
+					percentlist[firstPartyCategory][thirdPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				}
 				
 				unionlist[d.uid] |= d.has_cookie;
 				if (!(d.uid + thirdPartyCategory in blocklist)) {
 					// color in the first time
 					blocklist[d.uid + thirdPartyCategory] = d.has_cookie;
-					percentlist[thirdPartyCategory][firstPartyCategory].count++;
+					percentlist[firstPartyCategory][thirdPartyCategory].count++;
 					return (d['has_cookie'] == 1)?cookieColor:trackedColor;
 				} else if (d.has_cookie == 1) {
 					// or if it's tracked by cookie
@@ -630,31 +632,39 @@ function loadData() {
 		;
 	
 	// add third-party percents
-	for (i=0; i<active_categories[curSearch].length; i++) {
-		tpcat = active_categories[curSearch][i].value;
-		tptotal = active_categories[curSearch][i].data;
-		for (fpcat in percentlist[tpcat]) {
-			var j = 0;
-			for (j=0;j<categoryDivs.length;j++) {
-				if (categoryDivs[j].name == fpcat)
-					break;
+	for (j=0; j<categoryDivs.length; j++) {
+		fpcat = categoryDivs[j];
+		
+		// get total counts for that category
+		var fptotal = 0;
+		for (i=0; i<active_categories[curSearch].length; i++) {
+			tpcat = active_categories[curSearch][i];
+			if (fpcat.name in percentlist && tpcat.value in percentlist[fpcat.name]) {
+				fptotal += percentlist[fpcat.name][tpcat.value].count;
 			}
-			
-			result = percentlist[tpcat][fpcat].count / tptotal * 100;
-			var txt = result.toFixed(1) + "%";
-			txtwidth = getStringWidth(txt);
-			if (txtwidth >= categoryDivs[j].width)
-				txt = '';
-			
-			position = percentlist[tpcat][fpcat].height;
-			d3.select("svg")
-				.append("text")
-				.attr("text-anchor", "middle")
-				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
-				.attr("y", position + height + 9)
-				.attr("fill", percentlist[tpcat][fpcat].color)
-				.text(txt)
-				;
+		}
+		
+		for (i=0; i<active_categories[curSearch].length; i++) {
+			tpcat = active_categories[curSearch][i];
+			if (fpcat.name in percentlist) { // because we don't have an "Untracked" column
+				if (tpcat.value in percentlist[fpcat.name]) { // because it may not have shown up in that category
+					p = percentlist[fpcat.name][tpcat.value];
+					var txt = (p.count/fptotal*100).toFixed(1) + "%";
+					txtwidth = getStringWidth(txt);
+					if (txtwidth >= categoryDivs[j].width)
+						txt = '';
+					
+					position = percentlist[fpcat.name][tpcat.value].height;
+					d3.select("svg")
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+						.attr("y", position + height + 9)
+						.attr("fill", percentlist[fpcat.name][tpcat.value].color)
+						.text(txt)
+						;
+				}
+			}
 		}
 	}
 	
@@ -671,7 +681,8 @@ function loadData() {
 		}
 		
 		result = unionpercents[key]/ utot * 100;
-		var txt = result.toFixed(1) + "%";
+		//var txt = result.toFixed(1) + "%";
+		var txt = "100%"; // if row percents are out of only displayed rows
 		txtwidth = getStringWidth(txt);
 		if (txtwidth >= categoryDivs[j].width)
 			txt = '';
