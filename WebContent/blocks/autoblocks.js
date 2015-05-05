@@ -6,7 +6,7 @@ var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
 var trackedColor = 0.6; // opacity coding
 var cookieColor = 1.0;
-var untrackedColor = 0.3;
+var untrackedColor = 0.25;
 var colors = d3.scale.category10();
 
 // global vars
@@ -522,7 +522,6 @@ function loadData() {
 	x = offset;
 	y = height+width;
 	blocklist = {};
-	unionpercents = {};
 	unionTotals = [];
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
@@ -556,11 +555,6 @@ function loadData() {
 					origHeight = getHeightForCat(height, d.domain, categoryList);
 				if (origHeight != -100)
 				{
-					ucat = getFirstPartyCategory(d.uid);
-					if (!(ucat in unionpercents))
-						unionpercents[ucat] = 0;
-					unionpercents[ucat]++;
-					
 					unionlist[d.uid] = -1; // so we don't draw this again
 					if (trackVal == 1)
 						return cookieColor;
@@ -629,50 +623,50 @@ function loadData() {
 			else
 				return '';
 		})
+		.append("svg:title")
+		.text(function(d) { return (d.count / totalCats * 100).toFixed(1) + "% of recorded visits are " + d.name; });
 		;
 	
 	// add third-party percents
+	unionpercents = {};
 	for (j=0; j<categoryDivs.length; j++) {
 		fpcat = categoryDivs[j];
-		
+		unionpercents[fpcat.name] = 0;
 		// get total counts for that category
-		var fptotal = 0;
-		for (i=0; i<active_categories[curSearch].length; i++) {
-			tpcat = active_categories[curSearch][i];
-			if (fpcat.name in percentlist && tpcat.value in percentlist[fpcat.name]) {
-				fptotal += percentlist[fpcat.name][tpcat.value].count;
+		if (fpcat.name in percentlist) { // because we don't have an "Untracked" column
+			var fptotal = 0;
+			var tptotal = 0; // total count for only the displayed categories
+			for (tpcat in percentlist[fpcat.name]) {
+				fptotal += percentlist[fpcat.name][tpcat].count;
+				
+				if (active_categories[curSearch].filter(function(d) { return d.value==tpcat; }).length > 0) // if displayed
+					tptotal += percentlist[fpcat.name][tpcat].count;
 			}
-		}
-		
-		for (i=0; i<active_categories[curSearch].length; i++) {
-			tpcat = active_categories[curSearch][i];
-			if (fpcat.name in percentlist) { // because we don't have an "Untracked" column
-				if (tpcat.value in percentlist[fpcat.name]) { // because it may not have shown up in that category
-					p = percentlist[fpcat.name][tpcat.value];
-					var txt = (p.count/fptotal*100).toFixed(1) + "%";
-					txtwidth = getStringWidth(txt);
-					if (txtwidth >= categoryDivs[j].width)
-						txt = '';
-					
-					position = percentlist[fpcat.name][tpcat.value].height;
-					d3.select("svg")
-						.append("text")
-						.attr("text-anchor", "middle")
-						.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
-						.attr("y", position + height + 9)
-						.attr("fill", percentlist[fpcat.name][tpcat.value].color)
-						.text(txt)
-						;
-				}
+			unionpercents[fpcat.name] = tptotal / fptotal;
+			
+			for (tpcat in percentlist[fpcat.name]) {
+				p = percentlist[fpcat.name][tpcat];
+				var txt = (p.count/fptotal*100).toFixed(1) + "%";
+				txtwidth = getStringWidth(txt);
+				if (txtwidth >= categoryDivs[j].width)
+					txt = '';
+				
+				position = percentlist[fpcat.name][tpcat].height;
+				d3.select("svg")
+					.append("text")
+					.attr("text-anchor", "middle")
+					.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+					.attr("y", position + height + 9)
+					.attr("fill", percentlist[fpcat.name][tpcat].color)
+					.text(txt)
+					.append("svg:title")
+					.text(function(d) { return txt + " of visits to " + categoryDivs[j].name + " sites are tracked by " + tpcat; });
+					;
 			}
 		}
 	}
 	
 	// add union row percents
-	utot = 0;
-	for (key in unionpercents) {
-		utot += unionpercents[key];
-	}
 	for (key in unionpercents) {
 		var j = 0;
 		for (j=0;j<categoryDivs.length;j++) {
@@ -680,9 +674,8 @@ function loadData() {
 				break;
 		}
 		
-		result = unionpercents[key]/ utot * 100;
-		//var txt = result.toFixed(1) + "%";
-		var txt = "100%"; // if row percents are out of only displayed rows
+		result = unionpercents[key] * 100;
+		var txt = result.toFixed(1) + "%";
 		txtwidth = getStringWidth(txt);
 		if (txtwidth >= categoryDivs[j].width)
 			txt = '';
@@ -692,8 +685,10 @@ function loadData() {
 			.attr("text-anchor", "middle")
 			.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 			.attr("y", totalHeight+9)
-			.attr("fill", "#000")
+			.attr("fill", "#555")
 			.text(txt)
+			.append("svg:title")
+			.text(function(d) { return txt + " of visits to " + categoryDivs[j].name + " sites are tracked by currently selected trackers"; });
 			;
 	}
 }
