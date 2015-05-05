@@ -337,7 +337,16 @@ function loadData() {
 	var totalHeight = initHeight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
 		.attr('width', totalWidth)
-		.attr('height', totalHeight);
+		.attr('height', totalHeight+padding); // for the union row labels
+	
+	root.append("rect")
+		.attr('id', "highlight")
+		.attr('x', -width*2)
+		.attr('y', padding)
+		.attr('width', width)
+		.attr('height', totalHeight)
+		.attr('fill', '#ff0')
+		.attr('opacity', 0.5);
 	
 	// reset
 	x = offset;
@@ -355,12 +364,8 @@ function loadData() {
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
 		.on("click", function() {
-				if (selectedBlock != null) {
-					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[1]);
-				}
-				
 				selectedBlock = d3.select(this);
-				selectedBlock.append("rect")
+				d3.select("rect#highlight")
 					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
 					.attr('y', padding)
 					.attr('width', width)
@@ -482,13 +487,14 @@ function loadData() {
 				firstPartyCategory = getFirstPartyCategory(d.uid);
 				h = d.ypos;
 				if (thirdPartyCategory in percentlist) {
-					if (firstPartyCategory in percentlist[thirdPartyCategory])
+					if (firstPartyCategory in percentlist[thirdPartyCategory]) {
 						percentlist[thirdPartyCategory][firstPartyCategory].height = h;
-					else
-						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+						percentlist[thirdPartyCategory][firstPartyCategory].color = colors(thirdPartyCategory);
+					} else
+						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				} else {
 					percentlist[thirdPartyCategory] = {};
-					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				}
 				
 				unionlist[d.uid] |= d.has_cookie;
@@ -514,11 +520,12 @@ function loadData() {
 	x = offset;
 	y = height+width;
 	blocklist = {};
+	unionpercents = {};
+	unionTotals = [];
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
 		.attr('x', function(d) {
 				return xpos[d.uid];
-				//x += width; return x;
 			})
 		.attr('y', function(d) {
 				origHeight = -100;
@@ -547,7 +554,12 @@ function loadData() {
 					origHeight = getHeightForCat(height, d.domain, categoryList);
 				if (origHeight != -100)
 				{
-					unionlist[d.uid] = -1;
+					ucat = getFirstPartyCategory(d.uid);
+					if (!(ucat in unionpercents))
+						unionpercents[ucat] = 0;
+					unionpercents[ucat]++;
+					
+					unionlist[d.uid] = -1; // so we don't draw this again
 					if (trackVal == 1)
 						return cookieColor;
 					else if (trackVal == 0)
@@ -634,10 +646,38 @@ function loadData() {
 				.attr("text-anchor", "middle")
 				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 				.attr("y", position + height + 9)
-				.attr("fill", "#000")
+				.attr("fill", percentlist[tpcat][fpcat].color)
 				.text(txt)
 				;
 		}
+	}
+	
+	// add union row percents
+	utot = 0;
+	for (key in unionpercents) {
+		utot += unionpercents[key];
+	}
+	for (key in unionpercents) {
+		var j = 0;
+		for (j=0;j<categoryDivs.length;j++) {
+			if (categoryDivs[j].name == key)
+				break;
+		}
+		
+		result = unionpercents[key]/ utot * 100;
+		var txt = result.toFixed(1) + "%";
+		txtwidth = getStringWidth(txt);
+		if (txtwidth >= categoryDivs[j].width)
+			txt = '';
+	
+		d3.select("svg")
+			.append("text")
+			.attr("text-anchor", "middle")
+			.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+			.attr("y", totalHeight+9)
+			.attr("fill", "#000")
+			.text(txt)
+			;
 	}
 }
 
