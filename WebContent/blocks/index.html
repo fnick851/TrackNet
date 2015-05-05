@@ -5,11 +5,13 @@
 		<title>TrackNet :: Blocks</title>
 		<script src="http://d3js.org/d3.v3.min.js"></script>
 
-		<!-- searchbox -->
-        <link rel="stylesheet" type="text/css" href="includes/style.css">
-        <script type="text/javascript" src="includes/jquery-1.11.2.js"></script>
+		<link rel="stylesheet" type="text/css" href="includes/style.css">
+		<link rel="stylesheet" type="text/css" href="http://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.css">
+        
+		<script type="text/javascript" src="includes/jquery-1.11.2.js"></script>
         <script type="text/javascript" src="includes/jquery.autocomplete.js"></script>
-        <script src="autoblocks.js"></script>
+		<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/qtip2/2.1.1/jquery.qtip.js"></script>
+		<script src="autoblocks.js"></script>
 	</head>
 	<body onload="runMain()">
 		<div id="tabs">
@@ -23,7 +25,8 @@
 			<div id="firstparty">
 				<span>Sort By:</span>
 				<ul>
-					<li><a href="#" onclick="websiteView()" id="webview" class="selected">Website</a></li>
+					<li><a href="#" onclick="orderView()" id="orderview" class="selected">Tracking Level</a></li>
+					<li><a href="#" onclick="websiteView()" id="webview">Website</a></li>
 					<li><a href="#" onclick="categoryView()" id="categoryview">Category</a></li>
 				</ul>
 			</div>

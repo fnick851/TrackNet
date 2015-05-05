@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>TrackNet</title>
+
+    <link rel="stylesheet" type="text/css" href="includes/style.css">
+    <link rel="stylesheet" type="text/css" href="libs/colorbox.css">
+    <link rel="stylesheet" type="text/css" href="libs/jquery-ui.css">
+
+    <script type="text/javascript" src="libs/d3.min.js"></script>
+    <script type="text/javascript" src="libs/jquery-2.1.3.min.js"></script>
+    <script type="text/javascript" src="libs/jquery-ui.js"></script>
+    <script type="text/javascript" src="libs/jquery.autocomplete.js"></script>
+    <script type="text/javascript" src="libs/jquery.colorbox.js"></script>
+    <script type="text/javascript" src="libs/jquery.mousewheel.js"></script>
+
+    <script type="text/javascript" src="includes/autocomplete.js"></script>
+    <script type="text/javascript" src="includes/autoblocks.js"></script>  
+
+</head>
+<body onload="runMain()">
+	<header>
+        <img src="./includes/logo.png"/ id="logo">
+    </header>    
+
+<div id="main_container">
+  <div id="tabs_thirdparty">
+      <ul>
+          <li id="website_selector_tab_3p"><a href="#website_selector" onclick="websiteSearch();activate_3p_web_tab();"><span>Websites</span></a></li>
+          <li id="category_selector_tab_3p"><a href="#category_selector" onclick="categorySearch();activate_3p_cat_tab();"><span>Categories</span></a></li>
+      </ul>
+      <div id="searchbox_container">
+          <div id="searchfield">
+              <form id="search_box_form"><input type="text" name="category" id="autocomplete" placeholder="Search for website" onclick="$('#autocomplete').autocomplete('search', '');"></form>
+          </div>
+          <div id="active_categories"></div>
+      </div>
+  </div>
+
+  <div id="tabs_firstparty">
+    <ul>
+      <li id="website_selector_tab_1p"><a href="#website_selector" onclick="websiteView();activate_1p_web_tab();"><span>Websites</span></a></li>
+      <li id="category_selector_tab_1p"><a href="#category_selector" onclick="categoryView();activate_1p_cat_tab();"><span>Categories</span></a></li>
+    </ul>
+    <div id="chartholder">
+      <div id="chart"></div>
+      <div id="details" class="tooltip" style="opacity:0" onmouseleave="hide_tooltip();">
+        <script>
+              $(document).ready(function(){
+                  $(".iframe").colorbox({iframe:true, width:"90%", height:"90%"});
+              });
+          </script>
+          <p><a class='iframe' id="domain_link" href="#">Domain</a></p>
+          <hr style="margin: 0;"></hr>
+          <p><a class='iframe' id="category_link" href="#">Category</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <script type="text/javascript">
+  //Tabs UI Widget:
+
+$( "#tabs_thirdparty" ).tabs();
+$( "#tabs_firstparty" ).tabs();
+
+  (function( $ ) {
+    $.widget( "custom.combobox", {
+      _create: function() {
+        this.wrapper = $( "<span>" )
+          .addClass( "custom-combobox" )
+          .insertAfter( this.element );
+ 
+        this.element.hide();
+        this._createAutocomplete();
+        this._createShowAllButton();
+      },
+ 
+      _createAutocomplete: function() {
+        var selected = this.element.children( ":selected" ),
+          value = selected.val() ? selected.text() : "";
+ 
+        this.input = $( "<input>" )
+          .appendTo( this.wrapper )
+          .val( value )
+          .attr( "title", "" )
+          .addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
+          .autocomplete({
+            delay: 0,
+            minLength: 0,
+            source: $.proxy( this, "_source" )
+          })
+          .tooltip({
+            tooltipClass: "ui-state-highlight"
+          });
+ 
+        this._on( this.input, {
+          autocompleteselect: function( event, ui ) {
+            ui.item.option.selected = true;
+            this._trigger( "select", event, {
+              item: ui.item.option
+            });
+          },
+ 
+          autocompletechange: "_removeIfInvalid"
+        });
+      },
+ 
+      _createShowAllButton: function() {
+        var input = this.input,
+          wasOpen = false;
+ 
+        $( "<a>" )
+          .attr( "tabIndex", -1 )
+          .attr( "title", "Show All Items" )
+          .tooltip()
+          .appendTo( this.wrapper )
+          .button({
+            icons: {
+              primary: "ui-icon-triangle-1-s"
+            },
+            text: false
+          })
+          .removeClass( "ui-corner-all" )
+          .addClass( "custom-combobox-toggle ui-corner-right" )
+          .mousedown(function() {
+            wasOpen = input.autocomplete( "widget" ).is( ":visible" );
+          })
+          .click(function() {
+            input.focus();
+ 
+            // Close if already visible
+            if ( wasOpen ) {
+              return;
+            }
+ 
+            // Pass empty string as value to search for, displaying all results
+            input.autocomplete( "search", "" );
+          });
+      },
+ 
+      _source: function( request, response ) {
+        var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+        response( this.element.children( "option" ).map(function() {
+          var text = $( this ).text();
+          if ( this.value && ( !request.term || matcher.test(text) ) )
+            return {
+              label: text,
+              value: text,
+              option: this
+            };
+        }) );
+      },
+ 
+      _removeIfInvalid: function( event, ui ) {
+ 
+        // Selected an item, nothing to do
+        if ( ui.item ) {
+          return;
+        }
+ 
+        // Search for a match (case-insensitive)
+        var value = this.input.val(),
+          valueLowerCase = value.toLowerCase(),
+          valid = false;
+        this.element.children( "option" ).each(function() {
+          if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+            this.selected = valid = true;
+            return false;
+          }
+        });
+ 
+        // Found a match, nothing to do
+        if ( valid ) {
+          return;
+        }
+ 
+        // Remove invalid value
+        this.input
+          .val( "" )
+          .attr( "title", value + " didn't match any item" )
+          .tooltip( "open" );
+        this.element.val( "" );
+        this._delay(function() {
+          this.input.tooltip( "close" ).attr( "title", "" );
+        }, 2500 );
+        this.input.autocomplete( "instance" ).term = "";
+      },
+ 
+      _destroy: function() {
+        this.wrapper.remove();
+        this.element.show();
+      }
+    });
+  })( jQuery );
+ 
+  $(function() {
+    $( "#combobox" ).combobox();
+    $( "#toggle" ).click(function() {
+      $( "#combobox" ).toggle();
+    });
+  });
+  </script>
+</body>

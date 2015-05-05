@@ -4,7 +4,7 @@ var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
 var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
-var trackedColor = 0.7; // opacity coding
+var trackedColor = 0.6; // opacity coding
 var cookieColor = 1.0;
 var untrackedColor = 0.3;
 var colors = d3.scale.category10();
@@ -17,7 +17,7 @@ var categories;
 var x;
 var active_categories;
 var other_categories;
-var curView = 0; // website, 1 for category
+var curView = 2; // 0 for website, 1 for category, 2 for tracking level + uid
 var curSearch = 0; // website, 1 for category
 
 function websiteSearch() {
@@ -25,9 +25,7 @@ function websiteSearch() {
 	d3.select("#websearch").attr("class", "selected");
 	d3.select("#categorysearch").attr("class", "");
 	
-	//initializeCategories();
 	initializeSearchBox();
-	firstparty = addCategoriesToJson(firstparty);
 	loadData();
 }
 
@@ -36,9 +34,7 @@ function categorySearch() {
 	d3.select("#categorysearch").attr("class", "selected");
 	d3.select("#websearch").attr("class", "");
 	
-	//initializeCategories();
 	initializeSearchBox();
-	firstparty = addCategoriesToJson(firstparty);
 	loadData();
 }
 
@@ -46,9 +42,10 @@ function websiteView() {
 	curView = 0;
 	d3.select("#webview").attr("class", "selected");
 	d3.select("#categoryview").attr("class", "");
+	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
-		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
 		return d3.ascending(a.domain+aTracking,
 							b.domain+bTracking);
 	});
@@ -59,11 +56,26 @@ function categoryView() {
 	curView = 1;
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "selected");
+	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = isTracked(a.uid)?(hasCookie(a.uid)?"A":"B"):"C";
-		var bTracking = isTracked(b.uid)?(hasCookie(b.uid)?"A":"B"):"C";
-		return d3.ascending(a.category+a.domain+aTracking,
-							b.category+b.domain+bTracking);
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		return d3.ascending(a.category+aTracking+a.domain,
+							b.category+bTracking+b.domain);
+	});
+	loadData();
+}
+
+function orderView() {
+	curView = 2;
+	d3.select("#webview").attr("class", "");
+	d3.select("#categoryview").attr("class", "");
+	d3.select("#orderview").attr("class", "selected");
+	firstparty = firstparty.sort(function(a,b) {
+		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
+		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		return d3.ascending(aTracking+a.uid,
+							bTracking+b.uid);
 	});
 	loadData();
 }
@@ -76,13 +88,16 @@ function runMain() {
 		d3.json("../data/257.data.json", function(error, json) {
 		if (error) return alert("Error loading data: " + error);
 			td = json;
-			initializeCategories();
-			initializeSearchBox();
 			
 			firstparty = td["first_party"];
-			thirdparty = td["third_party"];
 			firstparty = addCategoriesToJson(firstparty);
-			visualizeit();		  
+			
+			thirdparty = td["third_party"];
+			thirdparty = addCategoriesToJson(thirdparty);
+			
+			initializeCategories();
+			initializeSearchBox();
+			visualizeit();
 		});
 	});
 }
@@ -95,8 +110,8 @@ function isTracked(domainId) {
 	for (i=0;i<thirdparty.length;i++) {
 		if (thirdparty[i]['uid'] == domainId)
 			return true;
-		else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
-			return false;
+		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
+		//	return false;
 	}
 	return false;
 }
@@ -116,8 +131,8 @@ function hasCookie(domainId) {
 	for (i=0;i<thirdparty.length;i++) {
 		if (thirdparty[i]['uid'] == domainId && thirdparty[i]['has_cookie'] == 1)
 			return true;
-		else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
-			return false;
+		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
+		//	return false;
 	}
 	return false;
 }
@@ -132,12 +147,6 @@ function addCategoriesToJson(datalist) {
 function initializeCategories() {
 	active_categories = {};
 	other_categories = {};
-	
-	firstparty = td["first_party"];
-	firstparty = addCategoriesToJson(firstparty);
-	
-	thirdparty = td["third_party"];
-	thirdparty = addCategoriesToJson(thirdparty);
 	
 	for (var searchType in [0,1]) {
 		clist = {};
@@ -285,20 +294,49 @@ function getHeightForCat(step, category, categoryList) {
 	return -100;
 }
 
+function getFirstPartyCategory(uid) {
+	// return the first party category classification, given a uid
+	for (i=0;i<firstparty.length;i++) {
+		if (firstparty[i].uid == uid) {
+			d = firstparty[i];
+			if (curView == 0) {
+				return d.domain;
+			} else if (curView == 1) {
+				return d.category;
+			} else if (curView == 2) {
+				trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				return trackingLevel;
+			}
+		}
+	}
+}
+
 function visualizeit() {
 	if (curView == 0)
 		websiteView();
-	else
+	else if (curView == 1)
 		categoryView();
+	else if (curView == 2)
+		orderView();
+}
+
+function getStringWidth(string) { 
+    var text = d3.select("svg").append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .style("opacity", 0)
+        .text(string);
+	return text.node().getBBox().width;
 }
 
 function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
+	var totalWidth = width*firstparty.length+offset;
 	var totalHeight = initHeight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
-		.attr('width', width*firstparty.length+offset)
+		.attr('width', totalWidth)
 		.attr('height', totalHeight);
 	
 	// reset
@@ -311,43 +349,10 @@ function loadData() {
 		.on("mouseover", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 0.5);
-				var details = d3.select("#details");
-				details.selectAll('p').remove();
-				details.append('p')
-					.append("a")
-					.attr("href", "#")
-					.text(block.data()[0].domain)
-					.attr("class", "domain");
-				details.append('p')
-					.append("a")
-					.attr("href", "#")
-					.text(block.data()[0].category)
-					.attr("class", "category");	
-				
-				var divx = parseInt(block.select("rect").attr("x")) + 275; // div offset - 1/2 tooltip width
-				details.transition()
-					.duration(200)
-					.style("opacity", .9)
-					.style("left", divx + "px")
-					.style("top", initHeight+height/2 + "px");
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
 				block.transition().duration(10).attr('opacity', 1.0);
-				var details = d3.select("#details");
-				details.selectAll('p').remove();
-				details.transition()
-					.duration(200)
-					.style("opacity", 0);
-				
-				if (selectedBlock != null) {
-					details.append('p')
-						.text(selectedBlock.data()[0].domain)
-						.attr("class", "domain");
-					details.append('p')
-						.text(selectedBlock.data()[0].category)
-						.attr("class", "category");
-				}
 			})
 		.on("click", function() {
 				if (selectedBlock != null) {
@@ -367,10 +372,26 @@ function loadData() {
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
-				if (d.category != lastCat) {
-					categoryDivs.push(x);
-					lastCat = d.category;
+				
+				// update category divs
+				if (curView == 0) {
+					if (d.domain != lastCat) {
+						categoryDivs.push({'name':d.domain, 'pos':x, 'count':0});
+						lastCat = d.domain;
+					}
+				} else if (curView == 1) {
+					if (d.category != lastCat) {
+						categoryDivs.push({'name':d.category, 'pos':x, 'count':0});
+						lastCat = d.category;
+					}
+				} else if (curView == 2) {
+					trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					if (trackingLevel != lastCat) {
+						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0});
+						lastCat = trackingLevel;
+					}
 				}
+				categoryDivs[categoryDivs.length-1].count++;
 				return x;
 			})
 		.attr('y', padding)
@@ -389,10 +410,37 @@ function loadData() {
 				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
 			})
 		//.append("svg:title")
-		//.text(function(d) { return d.domain; })
+		.attr("data-tooltip", function(d) {
+				return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
+			})
+		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
+		
+	// qtip2 tooltips
+	$('g').qtip({
+		hide: {
+			delay: 100,
+			fixed: true
+		},
+		content: {
+			text: function(event, api) {
+				return $(this)[0].firstChild.getAttribute('data-tooltip');
+			}
+		},
+		position: {
+			my: 'top center',
+			at: 'bottom center'
+		},
+		style: {
+			classes: 'qtip-light qtip-rounded customqtip'
+		},
+		tip: true
+	});
 	
 	// add individual blocks for third-party
+	blocklist = {};
+	unionlist = {};
+	percentlist = {}; // to calculate percent of third-party groups tracking first-party groups
 	x = offset;
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
@@ -402,9 +450,17 @@ function loadData() {
 				//x += width; return x;
 			})
 		.attr('y', function(d) {
-				if (curSearch == 1)
-					return y + padding + getHeightForCat(height, d.category, categoryList);
-				return y + padding + getHeightForCat(height, d.domain, categoryList);
+				h = 0;
+				thirdPartyCategory = '';
+				if (curSearch == 1) {
+					thirdPartyCategory = d.category;
+				} else {
+					thirdPartyCategory = d.domain;
+				}
+				h = y + padding + getHeightForCat(height, thirdPartyCategory, categoryList);
+				
+				d.ypos = h;
+				return h;
 			})
 		.attr('width', width)
 		.attr('height', height)
@@ -417,7 +473,38 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+				thirdPartyCategory = '';
+				if (curSearch == 1) {
+					thirdPartyCategory = d.category;
+				} else {
+					thirdPartyCategory = d.domain;
+				}
+				firstPartyCategory = getFirstPartyCategory(d.uid);
+				h = d.ypos;
+				if (thirdPartyCategory in percentlist) {
+					if (firstPartyCategory in percentlist[thirdPartyCategory])
+						percentlist[thirdPartyCategory][firstPartyCategory].height = h;
+					else
+						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+				} else {
+					percentlist[thirdPartyCategory] = {};
+					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+				}
+				
+				unionlist[d.uid] |= d.has_cookie;
+				if (!(d.uid + thirdPartyCategory in blocklist)) {
+					// color in the first time
+					blocklist[d.uid + thirdPartyCategory] = d.has_cookie;
+					percentlist[thirdPartyCategory][firstPartyCategory].count++;
+					return (d['has_cookie'] == 1)?cookieColor:trackedColor;
+				} else if (d.has_cookie == 1) {
+					// or if it's tracked by cookie
+					blocklist[d.uid + thirdPartyCategory] = 1;
+					return cookieColor;
+				} else {
+					// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
+					return 0;
+				}
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
@@ -426,6 +513,7 @@ function loadData() {
 	// add 'union' row at bottom
 	x = offset;
 	y = height+width;
+	blocklist = {};
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
 		.attr('x', function(d) {
@@ -451,21 +539,106 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+				var trackVal = unionlist[d.uid];
+				origHeight = -100;
+				if (curSearch == 1)
+					origHeight = getHeightForCat(height, d.category, categoryList);
+				else
+					origHeight = getHeightForCat(height, d.domain, categoryList);
+				if (origHeight != -100)
+				{
+					unionlist[d.uid] = -1;
+					if (trackVal == 1)
+						return cookieColor;
+					else if (trackVal == 0)
+						return trackedColor;
+				}
+				return 0;
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
 		;
 	
-	// draw category divisions
-	root.selectAll("rect#catDiv").data(categoryDivs).enter()
+	// draw category divisions and labels
+	root.selectAll("g#catDiv").data(categoryDivs).enter()
 		.append("rect")
-		.attr('x', function(d) { return d; } )
-		.attr('y', padding)
+		.attr('x', function(d) { return d.pos; })
+		.attr('y', 0)
 		.attr('width', 1)
 		.attr('height', totalHeight)
 		.attr('fill', "#000")
 		;
+	
+	var totalCats = 0;
+	categoryDivs.push({'pos':totalWidth});
+	for (var i = 0; i < categoryDivs.length-1; i++) {
+		categoryDivs[i]['width'] = categoryDivs[i+1].pos - categoryDivs[i].pos;
+		totalCats += categoryDivs[i].count;
+	}
+	categoryDivs.pop();
+	
+	// add category labels
+	root.selectAll("g#catLabels").data(categoryDivs).enter()
+		.append("text")
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
+		.attr('y', padding*3/4)
+		.attr('fill', "#000")
+		.text(function(d) {
+			var txt = d.name;
+			txtwidth = getStringWidth(txt);
+			if (txtwidth < d.width)
+				return txt;
+			else
+				return '';
+		})
+		;
+	
+	// add category percents
+	root.selectAll("g#catPercents").data(categoryDivs).enter()
+		.append("text")
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
+		.attr('y', initHeight+padding+9)
+		.attr('fill', "#000")
+		.text(function(d) {
+			var txt = (d.count / totalCats * 100).toFixed(1) + "%";
+			txtwidth = getStringWidth(txt);
+			if (txtwidth < d.width)
+				return txt;
+			else
+				return '';
+		})
+		;
+	
+	// add third-party percents
+	for (i=0; i<active_categories[curSearch].length; i++) {
+		tpcat = active_categories[curSearch][i].value;
+		tptotal = active_categories[curSearch][i].data;
+		for (fpcat in percentlist[tpcat]) {
+			var j = 0;
+			for (j=0;j<categoryDivs.length;j++) {
+				if (categoryDivs[j].name == fpcat)
+					break;
+			}
+			
+			result = percentlist[tpcat][fpcat].count / tptotal * 100;
+			var txt = result.toFixed(1) + "%";
+			txtwidth = getStringWidth(txt);
+			if (txtwidth >= categoryDivs[j].width)
+				txt = '';
+			
+			position = percentlist[tpcat][fpcat].height;
+			d3.select("svg")
+				.append("text")
+				.attr("text-anchor", "middle")
+				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+				.attr("y", position + height + 9)
+				.attr("fill", "#000")
+				.text(txt)
+				;
+		}
+	}
 }
 
 function remove_active_item(remove_item)

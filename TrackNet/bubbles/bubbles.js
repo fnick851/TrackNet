@@ -18,17 +18,17 @@ var p1Info;
 var bubbleData;
 var bubbleCenter = [260,260];
 var centralBubbleRadius = 35;
-var bigRadius = 120;
-var smallRadius = 65;
+var bigRadius = 110;
+var smallRadius = 55;
 var bubbleSizeRange = [60, 20];
 var bubbleVisibleCapacity = 15;
 var shrinkRadius = 16;
 var rightMostAngle = 0;
 
-var boxTopLeft = [550,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0]];
-var boxDimentions = [250,490,500];
+var boxTopLeft = [550,bubbleCenter[1]-bigRadius-2*bubbleSizeRange[0] + 50];
+var boxDimentions = [250,400,500];
 var trackerItemTopLeft = [boxTopLeft[0]+boxDimentions[0]*0.05,boxTopLeft[1]+70];
-var boxVisibleCapacity = 18;
+var boxVisibleCapacity = 14;
 var trackerItemHeight = 22;
 var showingTreemap = false;
 
@@ -41,8 +41,8 @@ var nextScreenX = 1000;
 function init(selector, vtype, uc) {
     svg = d3.select(selector)
             .append("svg")
-            .attr("width", 1300)
-            .attr("height", 520);
+            .attr("width", 1100)
+            .attr("height", 480);
     viewType = vtype;
     drawTimeline();
     useCookie = uc;
@@ -481,6 +481,10 @@ function drawTrackersBox(data) {
                 svg.selectAll(".trackerButtonGroup polygon")
                    .attr("visibility", "hidden");
                 triRight.attr("status", "inactive");
+
+                //TODO:
+                //Move everything a bit left so that the treemap and the p1buttons could be seen
+
                 var triLeft2 = drawTriangle("#trackersBox",
                                             [boxTopLeft[0]+boxDimentions[2]*0.88,boxTopLeft[1]+navOffset], 
                                             "left", colors(data.index), "active");
