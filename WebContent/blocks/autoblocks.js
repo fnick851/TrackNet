@@ -618,6 +618,11 @@ function loadData() {
 		j = 0;
 		for (fpcat in percentlist[tpcat]) {
 			result = percentlist[tpcat][fpcat].count / tptotal * 100;
+			var txt = result.toFixed(1) + "%";
+			txtwidth = getStringWidth(txt);
+			if (txtwidth >= categoryDivs[j].width)
+				txt = '';
+			
 			position = percentlist[tpcat][fpcat].height;
 			d3.select("svg")
 				.append("text")
@@ -625,7 +630,7 @@ function loadData() {
 				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 				.attr("y", position + height + 9)
 				.attr("fill", "#000")
-				.text(result.toFixed(1) + "%")
+				.text(txt)
 				;
 			j++;
 		}
