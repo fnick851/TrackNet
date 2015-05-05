@@ -339,6 +339,15 @@ function loadData() {
 		.attr('width', totalWidth)
 		.attr('height', totalHeight+padding); // for the union row labels
 	
+	root.append("rect")
+		.attr('id', "highlight")
+		.attr('x', -width*2)
+		.attr('y', padding)
+		.attr('width', width)
+		.attr('height', totalHeight)
+		.attr('fill', '#ff0')
+		.attr('opacity', 0.5);
+	
 	// reset
 	x = offset;
 	xpos = {};
@@ -355,12 +364,8 @@ function loadData() {
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
 		.on("click", function() {
-				if (selectedBlock != null) {
-					selectedBlock[0][0].removeChild(selectedBlock[0][0].childNodes[1]);
-				}
-				
 				selectedBlock = d3.select(this);
-				selectedBlock.append("rect")
+				d3.select("rect#highlight")
 					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
 					.attr('y', padding)
 					.attr('width', width)
