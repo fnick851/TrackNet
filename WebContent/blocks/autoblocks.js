@@ -615,8 +615,13 @@ function loadData() {
 	for (i=0; i<active_categories[curSearch].length; i++) {
 		tpcat = active_categories[curSearch][i].value;
 		tptotal = active_categories[curSearch][i].data;
-		j = 0;
 		for (fpcat in percentlist[tpcat]) {
+			var j = 0;
+			for (j=0;j<categoryDivs.length;j++) {
+				if (categoryDivs[j].name == fpcat)
+					break;
+			}
+			
 			result = percentlist[tpcat][fpcat].count / tptotal * 100;
 			var txt = result.toFixed(1) + "%";
 			txtwidth = getStringWidth(txt);
@@ -632,7 +637,6 @@ function loadData() {
 				.attr("fill", "#000")
 				.text(txt)
 				;
-			j++;
 		}
 	}
 }
