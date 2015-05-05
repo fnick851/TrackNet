@@ -571,7 +571,7 @@ function loadData() {
 		.text(function(d) { return d.domain; })
 		;
 	
-	// draw category divisions and labels
+	// draw category divisions
 	root.selectAll("g#catDiv").data(categoryDivs).enter()
 		.append("rect")
 		.attr('x', function(d) { return d.pos; })
@@ -591,11 +591,17 @@ function loadData() {
 	
 	// add category labels
 	root.selectAll("g#catLabels").data(categoryDivs).enter()
-		.append("text")
+		.append("a")
+		.attr("xlink:href", "#")
 		.attr("text-anchor", "middle")
 		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', padding*3/4)
+		
+		.append("text")
 		.attr('fill', "#000")
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
+		.attr('y', padding*3/4)
 		.text(function(d) {
 			var txt = d.name;
 			txtwidth = getStringWidth(txt);
