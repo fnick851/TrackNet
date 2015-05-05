@@ -294,6 +294,23 @@ function getHeightForCat(step, category, categoryList) {
 	return -100;
 }
 
+function getFirstPartyCategory(uid) {
+	// return the first party category classification, given a uid
+	for (i=0;i<firstparty.length;i++) {
+		if (firstparty[i].uid == uid) {
+			d = firstparty[i];
+			if (curView == 0) {
+				return d.domain;
+			} else if (curView == 1) {
+				return d.category;
+			} else if (curView == 2) {
+				trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				return trackingLevel;
+			}
+		}
+	}
+}
+
 function visualizeit() {
 	if (curView == 0)
 		websiteView();
@@ -343,11 +360,6 @@ function loadData() {
 				}
 				
 				selectedBlock = d3.select(this);
-				
-				var xoffset = d3.select("svg")[0][0].scrollLeft;
-				console.log(xoffset); // nope
-				console.log(selectedBlock.data()[0].uid); // yes
-				
 				selectedBlock.append("rect")
 					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
 					.attr('y', padding)
@@ -360,23 +372,26 @@ function loadData() {
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
+				
+				// update category divs
 				if (curView == 0) {
 					if (d.domain != lastCat) {
-						categoryDivs.push({'name':d.domain, 'pos':x});
+						categoryDivs.push({'name':d.domain, 'pos':x, 'count':0});
 						lastCat = d.domain;
 					}
 				} else if (curView == 1) {
 					if (d.category != lastCat) {
-						categoryDivs.push({'name':d.category, 'pos':x});
+						categoryDivs.push({'name':d.category, 'pos':x, 'count':0});
 						lastCat = d.category;
 					}
 				} else if (curView == 2) {
 					trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
 					if (trackingLevel != lastCat) {
-						categoryDivs.push({'name':trackingLevel, 'pos':x});
+						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0});
 						lastCat = trackingLevel;
 					}
 				}
+				categoryDivs[categoryDivs.length-1].count++;
 				return x;
 			})
 		.attr('y', padding)
@@ -425,6 +440,7 @@ function loadData() {
 	// add individual blocks for third-party
 	blocklist = {};
 	unionlist = {};
+	percentlist = {}; // to calculate percent of third-party groups tracking first-party groups
 	x = offset;
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
@@ -434,9 +450,17 @@ function loadData() {
 				//x += width; return x;
 			})
 		.attr('y', function(d) {
-				if (curSearch == 1)
-					return y + padding + getHeightForCat(height, d.category, categoryList);
-				return y + padding + getHeightForCat(height, d.domain, categoryList);
+				h = 0;
+				thirdPartyCategory = '';
+				if (curSearch == 1) {
+					thirdPartyCategory = d.category;
+				} else {
+					thirdPartyCategory = d.domain;
+				}
+				h = y + padding + getHeightForCat(height, thirdPartyCategory, categoryList);
+				
+				d.ypos = h;
+				return h;
 			})
 		.attr('width', width)
 		.attr('height', height)
@@ -449,34 +473,38 @@ function loadData() {
 				//if (getDomain(d.uid) == d.domain) {
 				//	return 0; // do not show self-tracking
 				//}
-				unionlist[d.uid] |= d.has_cookie;
-				if (curSearch == 0) {
-					if (!(d.uid + d.domain in blocklist)) {
-						// color in the first time
-						blocklist[d.uid + d.domain] = d.has_cookie;
-						return (d['has_cookie'] == 1)?cookieColor:trackedColor;
-					} else if (d.has_cookie == 1) {
-						// or if it's tracked by cookie
-						blocklist[d.uid + d.domain] = 1;
-						return cookieColor;
-					} else {
-						// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
-						return 0;
-					}
+				thirdPartyCategory = '';
+				if (curSearch == 1) {
+					thirdPartyCategory = d.category;
 				} else {
-					if (!(d.uid + d.category in blocklist)) {
-						// color in the first time
-						blocklist[d.uid + d.category] = d.has_cookie;
-						return (d.has_cookie == 1)?cookieColor:trackedColor;
-					} else if (blocklist[d.uid + d.category] == 1) {
-						// or if it's tracked by cookie
-						return cookieColor;
-					} else {
-						// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
-						return 0;
-					}
+					thirdPartyCategory = d.domain;
 				}
-				//return (d['has_cookie'] == 1)?cookieColor:trackedColor;
+				firstPartyCategory = getFirstPartyCategory(d.uid);
+				h = d.ypos;
+				if (thirdPartyCategory in percentlist) {
+					if (firstPartyCategory in percentlist[thirdPartyCategory])
+						percentlist[thirdPartyCategory][firstPartyCategory].height = h;
+					else
+						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+				} else {
+					percentlist[thirdPartyCategory] = {};
+					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0};
+				}
+				
+				unionlist[d.uid] |= d.has_cookie;
+				if (!(d.uid + thirdPartyCategory in blocklist)) {
+					// color in the first time
+					blocklist[d.uid + thirdPartyCategory] = d.has_cookie;
+					percentlist[thirdPartyCategory][firstPartyCategory].count++;
+					return (d['has_cookie'] == 1)?cookieColor:trackedColor;
+				} else if (d.has_cookie == 1) {
+					// or if it's tracked by cookie
+					blocklist[d.uid + thirdPartyCategory] = 1;
+					return cookieColor;
+				} else {
+					// but otherwise, do not show, or multiple tracked blocks will stack up and look wrong
+					return 0;
+				}
 			})
 		.append("svg:title")
 		.text(function(d) { return d.domain; })
@@ -541,25 +569,67 @@ function loadData() {
 		.attr('fill', "#000")
 		;
 	
-	// center labels
+	var totalCats = 0;
 	categoryDivs.push({'pos':totalWidth});
 	for (var i = 0; i < categoryDivs.length-1; i++) {
 		categoryDivs[i]['width'] = categoryDivs[i+1].pos - categoryDivs[i].pos;
+		totalCats += categoryDivs[i].count;
 	}
+	categoryDivs.pop();
 	
+	// add category labels
 	root.selectAll("g#catLabels").data(categoryDivs).enter()
 		.append("text")
-		.attr('x', function(d) { return d.pos + 2; })
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', padding*3/4)
 		.attr('fill', "#000")
 		.text(function(d) {
-			txtwidth = getStringWidth(d.name);
+			var txt = d.name;
+			txtwidth = getStringWidth(txt);
 			if (txtwidth < d.width)
-				return d.name;
+				return txt;
 			else
 				return '';
 		})
 		;
+	
+	// add category percents
+	root.selectAll("g#catPercents").data(categoryDivs).enter()
+		.append("text")
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
+		.attr('y', initHeight+padding+9)
+		.attr('fill', "#000")
+		.text(function(d) {
+			var txt = (d.count / totalCats * 100).toFixed(1) + "%";
+			txtwidth = getStringWidth(txt);
+			if (txtwidth < d.width)
+				return txt;
+			else
+				return '';
+		})
+		;
+	
+	// add third-party percents
+	for (i=0; i<active_categories[curSearch].length; i++) {
+		tpcat = active_categories[curSearch][i].value;
+		tptotal = active_categories[curSearch][i].data;
+		j = 0;
+		for (fpcat in percentlist[tpcat]) {
+			result = percentlist[tpcat][fpcat].count / tptotal * 100;
+			position = percentlist[tpcat][fpcat].height;
+			d3.select("svg")
+				.append("text")
+				.attr("text-anchor", "middle")
+				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+				.attr("y", position + height + 9)
+				.attr("fill", "#000")
+				.text(result.toFixed(1) + "%")
+				;
+			j++;
+		}
+	}
 }
 
 function remove_active_item(remove_item)
