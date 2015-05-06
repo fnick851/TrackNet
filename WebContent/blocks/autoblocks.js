@@ -162,30 +162,30 @@ function initializeCategories() {
 		if (searchType == 1) {
 			// searching by category
 			for (var key in thirdparty) {
-				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
 					if (clist[thirdparty[key].category] == null) {
 						clist[thirdparty[key].category] = {};
 						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-					} else //if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
+					} else if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
 						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-					//} else { // count each tracker, not just each visit
-					//	clist[thirdparty[key].category][thirdparty[key].uid]++;
-					//}
-				//}
+					} else { // count each tracker, not just each visit
+						clist[thirdparty[key].category][thirdparty[key].uid]++;
+					}
+				}
 			}
 		} else {
 			// searching by websites
 			for (var key in thirdparty) {
-				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
 					if (clist[thirdparty[key].domain] == null) {
 						clist[thirdparty[key].domain] = {};
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					} else //if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
+					} else if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					//} else { // count each tracker, not just each visit
-					//	clist[thirdparty[key].domain][thirdparty[key].uid]++;
-					//}
-				//}
+					} else { // count each tracker, not just each visit
+						clist[thirdparty[key].domain][thirdparty[key].uid]++;
+					}
+				}
 			}
 		}
 		
@@ -494,9 +494,9 @@ function loadData() {
 				return colors(d.domain);
 			})
 		.attr('opacity', function(d) {
-				//if (getDomain(d.uid) == d.domain) {
-				//	return 0; // do not show self-tracking
-				//}
+				if (getDomain(d.uid) == d.domain) {
+					return 0; // do not show self-tracking
+				}
 				thirdPartyCategory = '';
 				if (curSearch == 1) {
 					thirdPartyCategory = d.category;
@@ -563,9 +563,9 @@ function loadData() {
 				return "#000";
 			})
 		.attr('opacity', function(d) {
-				//if (getDomain(d.uid) == d.domain) {
-				//	return 0; // do not show self-tracking
-				//}
+				if (getDomain(d.uid) == d.domain) {
+					return 0; // do not show self-tracking
+				}
 				var trackVal = unionlist[d.uid];
 				origHeight = -100;
 				if (curSearch == 1)
