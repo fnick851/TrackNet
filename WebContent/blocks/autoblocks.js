@@ -369,7 +369,7 @@ function loadData() {
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
-				                  $(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+				$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
 
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
@@ -600,10 +600,17 @@ function loadData() {
 	// add category labels
 	root.selectAll("g#catLabels").data(categoryDivs).enter()
 		.append("a")
-		.attr("xlink:href", "#")
+		.attr("xlink:href", function(d){
+			if(!id_list["catDict"][d.name])
+				return "../bubbles/popup.html?domain=" + id_list["domainDict"][d.name];
+			else
+				return "../bubbles/popup.html?category=" + id_list["catDict"][d.name];
+		})
 		.attr("text-anchor", "middle")
 		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', padding*3/4)
+		.attr("class", "iframe")
+
 		
 		.append("text")
 		.attr('fill', "#000")
@@ -619,6 +626,8 @@ function loadData() {
 				return '';
 		})
 		;
+
+	$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
 	
 	// add category percents
 	root.selectAll("g#catPercents").data(categoryDivs).enter()
@@ -676,6 +685,7 @@ function loadData() {
 					;
 			}
 		}
+
 	}
 	
 	// add union row percents
