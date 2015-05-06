@@ -311,7 +311,8 @@ function getFirstPartyCategory(uid) {
 			} else if (curView == 1) {
 				return d.category;
 			} else if (curView == 2) {
-				trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				//trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				trackingLevel = "All Sites";
 				return trackingLevel;
 			}
 		}
@@ -402,7 +403,8 @@ function loadData() {
 						lastCat = d.category;
 					}
 				} else if (curView == 2) {
-					trackingLevel = (!dIsTracked)?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					//trackingLevel = (!dIsTracked)?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					trackingLevel = "All Sites";
 					if (trackingLevel != lastCat) {
 						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0, 'trackedCount':0});
 						lastCat = trackingLevel;
@@ -657,7 +659,7 @@ function loadData() {
 				return '';
 		})
 		.append("svg:title")
-		.text(function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked."; });
+		.text(function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked"; });
 		;
 	
 	// add third-party percents
