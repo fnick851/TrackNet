@@ -19,6 +19,7 @@ var active_categories;
 var other_categories;
 var curView = 2; // 0 for website, 1 for category, 2 for tracking level + uid
 var curSearch = 0; // website, 1 for category
+var id_list; //Website/Category ID list
 
 function websiteSearch() {
 	curSearch = 0;
@@ -100,7 +101,13 @@ function runMain() {
 			visualizeit();
 		});
 	});
+
+	d3.json("../data/257.ids.json", function(error, json) {
+		if (error) return alert("Error loading categories: " + error);
+		id_list = json
+	});
 }
+
 
 function isTracked(domainId) {
 	// parameter: first-party domain's UID
@@ -357,10 +364,13 @@ function loadData() {
 		.append("g")
 		.on("mouseover", function() {
 				var block = d3.select(this);
+
 				block.transition().duration(10).attr('opacity', 0.5);
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
+				                  $(".iframe").colorbox({iframe:true, width:"90%", height:"90%"});
+
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
 		.on("click", function() {
@@ -416,7 +426,9 @@ function loadData() {
 			})
 		//.append("svg:title")
 		.attr("data-tooltip", function(d) {
-				return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
+			                  $(".iframe").colorbox({iframe:true, width:"90%", height:"90%"});
+
+				return '<a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + "</a><br />"+'<a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + "</a>";
 			})
 		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
