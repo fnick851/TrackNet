@@ -166,10 +166,8 @@ function initializeCategories() {
 					if (clist[thirdparty[key].category] == null) {
 						clist[thirdparty[key].category] = {};
 						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-					} else if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
-						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
 					} else { // count each tracker, not just each visit
-						clist[thirdparty[key].category][thirdparty[key].uid]++;
+						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
 					}
 				}
 			}
