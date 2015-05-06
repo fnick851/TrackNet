@@ -180,10 +180,8 @@ function initializeCategories() {
 					if (clist[thirdparty[key].domain] == null) {
 						clist[thirdparty[key].domain] = {};
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					} else if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
+					} else {
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					} else { // count each tracker, not just each visit
-						clist[thirdparty[key].domain][thirdparty[key].uid]++;
 					}
 				}
 			}
@@ -355,6 +353,15 @@ function loadData() {
 		.attr('height', totalHeight)
 		.attr('fill', '#ff0')
 		.attr('opacity', 0.5);
+		
+	root.append("rect")
+		.attr('id', "mousehighlight")
+		.attr('x', -width*2)
+		.attr('y', padding)
+		.attr('width', width)
+		.attr('height', totalHeight)
+		.attr('fill', '#ff0')
+		.attr('opacity', 0.2);
 	
 	// reset
 	x = offset;
@@ -365,7 +372,11 @@ function loadData() {
 		.append("g")
 		.on("mouseover", function() {
 				var block = d3.select(this);
-
+				
+				d3.select("rect#mousehighlight")
+					.attr('x', block[0][0].childNodes[0].getAttribute("x"))
+					.attr('y', padding);
+				
 				block.transition().duration(10).attr('opacity', 0.5);
             })
 		.on("mouseout", function() {
@@ -375,14 +386,10 @@ function loadData() {
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
 		.on("click", function() {
-				selectedBlock = d3.select(this);
+				block = d3.select(this);
 				d3.select("rect#highlight")
-					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
-					.attr('y', padding)
-					.attr('width', width)
-					.attr('height', totalHeight)// + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y"))
-					.attr('fill', '#ff0')
-					.attr('opacity', 0.5);
+					.attr('x', block[0][0].childNodes[0].getAttribute("x"))
+					.attr('y', padding);
 			})
 		.append("rect")
 		.attr('x', function(d) {
