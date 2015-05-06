@@ -1,8 +1,8 @@
 // display variables
-var width=3;		// width of each block
+var width=4;		// width of each block
 var height=17; 		// active_category div height
 var padding=16; 	// pixels between rows
-var initheight=40; 	// search form height
+var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
 var trackedColor = 0.7; // opacity coding
 var cookieColor = 1.0;
@@ -300,7 +300,7 @@ function getCategoryList(datalist) {
 }
 
 function getHeightForCat(step, category, categoryList) {
-	h = initheight-step+padding;
+	h = initHeight-step+padding;
 	for (i=0;i<categoryList.length;i++) {
 		if (categoryList[i] == category)
 			return h;
@@ -321,7 +321,7 @@ function loadData() {
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
-	var totalHeight = initheight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
+	var totalHeight = initHeight+padding+(height+padding)*(categoryList.length+1); // +1 for union row
 	var root = d3.select("#chart").append('svg')
 		.attr('width', width*firstparty.length+offset)
 		.attr('height', totalHeight);
@@ -358,7 +358,7 @@ function loadData() {
 					.duration(200)
 					.style("opacity", .9)
 					.style("left", divx + "px")
-					.style("top", initheight+height/2 + 50 +"px");
+					.style("top", initHeight+height/2 + 50 +"px");
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
@@ -406,7 +406,7 @@ function loadData() {
 			})
 		.attr('y', padding)
 		.attr('width', width)
-		.attr('height', initheight)
+		.attr('height', initHeight)
 		.attr('fill', function(d) {
 				/*
 				if (curSearch == 1)

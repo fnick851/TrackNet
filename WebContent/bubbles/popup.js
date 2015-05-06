@@ -1,4 +1,4 @@
-d3.json("../data/851.adjacency.json", function(error, data) {
+d3.json("../data/257.adjacency.json", function(error, data) {
     completeData = data;
 
     bubbleCenter = [245,245];

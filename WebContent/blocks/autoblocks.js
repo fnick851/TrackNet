@@ -6,7 +6,7 @@ var initHeight=40; 	// search form height
 var offset=5; 		// left margin for labels
 var trackedColor = 0.6; // opacity coding
 var cookieColor = 1.0;
-var untrackedColor = 0.3;
+var untrackedColor = 0.25;
 var colors = d3.scale.category10();
 
 // global vars
@@ -19,6 +19,7 @@ var active_categories;
 var other_categories;
 var curView = 2; // 0 for website, 1 for category, 2 for tracking level + uid
 var curSearch = 0; // website, 1 for category
+var id_list; //Website/Category ID list
 
 function websiteSearch() {
 	curSearch = 0;
@@ -100,7 +101,13 @@ function runMain() {
 			visualizeit();
 		});
 	});
+
+	d3.json("../data/257.ids.json", function(error, json) {
+		if (error) return alert("Error loading categories: " + error);
+		id_list = json
+	});
 }
+
 
 function isTracked(domainId) {
 	// parameter: first-party domain's UID
@@ -155,30 +162,28 @@ function initializeCategories() {
 		if (searchType == 1) {
 			// searching by category
 			for (var key in thirdparty) {
-				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
 					if (clist[thirdparty[key].category] == null) {
 						clist[thirdparty[key].category] = {};
 						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-					} else //if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
+					} else if (clist[thirdparty[key].category][thirdparty[key].uid] == null) {
 						clist[thirdparty[key].category][thirdparty[key].uid] = 1;
-					//} else { // count each tracker, not just each visit
-					//	clist[thirdparty[key].category][thirdparty[key].uid]++;
-					//}
-				//}
+					} else { // count each tracker, not just each visit
+						clist[thirdparty[key].category][thirdparty[key].uid]++;
+					}
+				}
 			}
 		} else {
 			// searching by websites
 			for (var key in thirdparty) {
-				//if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
+				if (getDomain(thirdparty[key].uid) != thirdparty[key].domain) { // ignore self-tracking					
 					if (clist[thirdparty[key].domain] == null) {
 						clist[thirdparty[key].domain] = {};
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					} else //if (clist[thirdparty[key].domain][thirdparty[key].uid] == null) {
+					} else {
 						clist[thirdparty[key].domain][thirdparty[key].uid] = 1;
-					//} else { // count each tracker, not just each visit
-					//	clist[thirdparty[key].domain][thirdparty[key].uid]++;
-					//}
-				//}
+					}
+				}
 			}
 		}
 		
@@ -304,7 +309,8 @@ function getFirstPartyCategory(uid) {
 			} else if (curView == 1) {
 				return d.category;
 			} else if (curView == 2) {
-				trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				//trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				trackingLevel = "All Sites";
 				return trackingLevel;
 			}
 		}
@@ -347,6 +353,15 @@ function loadData() {
 		.attr('height', totalHeight)
 		.attr('fill', '#ff0')
 		.attr('opacity', 0.5);
+		
+	root.append("rect")
+		.attr('id', "mousehighlight")
+		.attr('x', -width*2)
+		.attr('y', padding)
+		.attr('width', width)
+		.attr('height', totalHeight)
+		.attr('fill', '#ff0')
+		.attr('opacity', 0.2);
 	
 	// reset
 	x = offset;
@@ -357,45 +372,54 @@ function loadData() {
 		.append("g")
 		.on("mouseover", function() {
 				var block = d3.select(this);
+				
+				d3.select("rect#mousehighlight")
+					.attr('x', block[0][0].childNodes[0].getAttribute("x"))
+					.attr('y', padding);
+				
 				block.transition().duration(10).attr('opacity', 0.5);
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
+				$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
 		.on("click", function() {
-				selectedBlock = d3.select(this);
+				block = d3.select(this);
 				d3.select("rect#highlight")
-					.attr('x', selectedBlock[0][0].childNodes[0].getAttribute("x"))
-					.attr('y', padding)
-					.attr('width', width)
-					.attr('height', totalHeight)// + parseInt(selectedBlock[0][0].childNodes[1].getAttribute("y"))
-					.attr('fill', '#ff0')
-					.attr('opacity', 0.5);
+					.attr('x', block[0][0].childNodes[0].getAttribute("x"))
+					.attr('y', padding);
 			})
 		.append("rect")
 		.attr('x', function(d) {
 				x += width;
 				xpos[d.uid] = x;
 				
+				dIsTracked = isTracked(d.uid);
+				
 				// update category divs
 				if (curView == 0) {
 					if (d.domain != lastCat) {
-						categoryDivs.push({'name':d.domain, 'pos':x, 'count':0});
+						categoryDivs.push({'name':d.domain, 'pos':x, 'count':0, 'trackedCount':0});
 						lastCat = d.domain;
 					}
 				} else if (curView == 1) {
 					if (d.category != lastCat) {
-						categoryDivs.push({'name':d.category, 'pos':x, 'count':0});
+						categoryDivs.push({'name':d.category, 'pos':x, 'count':0, 'trackedCount':0});
 						lastCat = d.category;
 					}
 				} else if (curView == 2) {
-					trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					//trackingLevel = (!dIsTracked)?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					trackingLevel = "All Sites";
 					if (trackingLevel != lastCat) {
-						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0});
+						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0, 'trackedCount':0});
 						lastCat = trackingLevel;
 					}
 				}
+				if (dIsTracked)
+					categoryDivs[categoryDivs.length-1].trackedCount++;
+				
 				categoryDivs[categoryDivs.length-1].count++;
 				return x;
 			})
@@ -416,7 +440,9 @@ function loadData() {
 			})
 		//.append("svg:title")
 		.attr("data-tooltip", function(d) {
-				return "<a href='#"+d.domain+"'>" + d.domain + "</a><br /><a href='#" + d.category + "'>" + d.category + "</a>";
+			                  $(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+
+				return '<a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + "</a><br />"+'<a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + "</a>";
 			})
 		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
@@ -475,33 +501,35 @@ function loadData() {
 				return colors(d.domain);
 			})
 		.attr('opacity', function(d) {
-				//if (getDomain(d.uid) == d.domain) {
-				//	return 0; // do not show self-tracking
-				//}
+				if (getDomain(d.uid) == d.domain) {
+					return 0; // do not show self-tracking
+				}
 				thirdPartyCategory = '';
 				if (curSearch == 1) {
 					thirdPartyCategory = d.category;
 				} else {
 					thirdPartyCategory = d.domain;
 				}
+				
+				// initialize percent list if needed
 				firstPartyCategory = getFirstPartyCategory(d.uid);
 				h = d.ypos;
-				if (thirdPartyCategory in percentlist) {
-					if (firstPartyCategory in percentlist[thirdPartyCategory]) {
-						percentlist[thirdPartyCategory][firstPartyCategory].height = h;
-						percentlist[thirdPartyCategory][firstPartyCategory].color = colors(thirdPartyCategory);
+				if (firstPartyCategory in percentlist) {
+					if (thirdPartyCategory in percentlist[firstPartyCategory]) {
+						percentlist[firstPartyCategory][thirdPartyCategory].height = h;
+						percentlist[firstPartyCategory][thirdPartyCategory].color = colors(thirdPartyCategory);
 					} else
-						percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
+						percentlist[firstPartyCategory][thirdPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				} else {
-					percentlist[thirdPartyCategory] = {};
-					percentlist[thirdPartyCategory][firstPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
+					percentlist[firstPartyCategory] = {};
+					percentlist[firstPartyCategory][thirdPartyCategory] = {'height':h, 'count':0, 'color':colors(thirdPartyCategory)};
 				}
 				
 				unionlist[d.uid] |= d.has_cookie;
 				if (!(d.uid + thirdPartyCategory in blocklist)) {
 					// color in the first time
 					blocklist[d.uid + thirdPartyCategory] = d.has_cookie;
-					percentlist[thirdPartyCategory][firstPartyCategory].count++;
+					percentlist[firstPartyCategory][thirdPartyCategory].count++;
 					return (d['has_cookie'] == 1)?cookieColor:trackedColor;
 				} else if (d.has_cookie == 1) {
 					// or if it's tracked by cookie
@@ -521,7 +549,6 @@ function loadData() {
 	y = height+width;
 	blocklist = {};
 	unionpercents = {};
-	unionTotals = [];
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
 		.attr('x', function(d) {
@@ -543,9 +570,9 @@ function loadData() {
 				return "#000";
 			})
 		.attr('opacity', function(d) {
-				//if (getDomain(d.uid) == d.domain) {
-				//	return 0; // do not show self-tracking
-				//}
+				if (getDomain(d.uid) == d.domain) {
+					return 0; // do not show self-tracking
+				}
 				var trackVal = unionlist[d.uid];
 				origHeight = -100;
 				if (curSearch == 1)
@@ -554,11 +581,12 @@ function loadData() {
 					origHeight = getHeightForCat(height, d.domain, categoryList);
 				if (origHeight != -100)
 				{
-					ucat = getFirstPartyCategory(d.uid);
-					if (!(ucat in unionpercents))
-						unionpercents[ucat] = 0;
-					unionpercents[ucat]++;
-					
+					if (trackVal != -1) {
+						fpcat = getFirstPartyCategory(d.uid);
+						if (!(fpcat in unionpercents))
+							unionpercents[fpcat] = 0;
+						unionpercents[fpcat]++;
+					}
 					unionlist[d.uid] = -1; // so we don't draw this again
 					if (trackVal == 1)
 						return cookieColor;
@@ -571,7 +599,7 @@ function loadData() {
 		.text(function(d) { return d.domain; })
 		;
 	
-	// draw category divisions and labels
+	// draw category divisions
 	root.selectAll("g#catDiv").data(categoryDivs).enter()
 		.append("rect")
 		.attr('x', function(d) { return d.pos; })
@@ -581,6 +609,7 @@ function loadData() {
 		.attr('fill', "#000")
 		;
 	
+	// calculate category division widths
 	var totalCats = 0;
 	categoryDivs.push({'pos':totalWidth});
 	for (var i = 0; i < categoryDivs.length-1; i++) {
@@ -591,11 +620,24 @@ function loadData() {
 	
 	// add category labels
 	root.selectAll("g#catLabels").data(categoryDivs).enter()
-		.append("text")
+		.append("a")
+		.attr("xlink:href", function(d){
+			if(!id_list["catDict"][d.name])
+				return "../bubbles/popup.html?domain=" + id_list["domainDict"][d.name];
+			else
+				return "../bubbles/popup.html?category=" + id_list["catDict"][d.name];
+		})
 		.attr("text-anchor", "middle")
 		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', padding*3/4)
+		.attr("class", "iframe")
+
+		
+		.append("text")
 		.attr('fill', "#000")
+		.attr("text-anchor", "middle")
+		.attr('x', function(d) { return d.pos + d.width/2; })
+		.attr('y', padding*3/4)
 		.text(function(d) {
 			var txt = d.name;
 			txtwidth = getStringWidth(txt);
@@ -605,6 +647,8 @@ function loadData() {
 				return '';
 		})
 		;
+
+	$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
 	
 	// add category percents
 	root.selectAll("g#catPercents").data(categoryDivs).enter()
@@ -614,57 +658,53 @@ function loadData() {
 		.attr('y', initHeight+padding+9)
 		.attr('fill', "#000")
 		.text(function(d) {
-			var txt = (d.count / totalCats * 100).toFixed(1) + "%";
+			var txt = (d.trackedCount / d.count * 100).toFixed(1) + "%";
 			txtwidth = getStringWidth(txt);
 			if (txtwidth < d.width)
 				return txt;
 			else
 				return '';
 		})
+		.append("svg:title")
+		.text(function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked"; });
 		;
 	
 	// add third-party percents
-	for (i=0; i<active_categories[curSearch].length; i++) {
-		tpcat = active_categories[curSearch][i].value;
-		tptotal = active_categories[curSearch][i].data;
-		for (fpcat in percentlist[tpcat]) {
-			var j = 0;
-			for (j=0;j<categoryDivs.length;j++) {
-				if (categoryDivs[j].name == fpcat)
-					break;
+	for (j=0; j<categoryDivs.length; j++) {
+		fpcat = categoryDivs[j];
+		// get total counts for that category
+		if (fpcat.name in percentlist) { // because we don't have an "Untracked" column
+			for (tpcat in percentlist[fpcat.name]) {
+				p = percentlist[fpcat.name][tpcat];
+				var txt = (p.count / categoryDivs[j].count * 100).toFixed(1) + "%";
+				txtwidth = getStringWidth(txt);
+				if (txtwidth >= categoryDivs[j].width)
+					txt = '';
+				
+				position = percentlist[fpcat.name][tpcat].height;
+				d3.select("svg")
+					.append("text")
+					.attr("text-anchor", "middle")
+					.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
+					.attr("y", position + height + 9)
+					.attr("fill", percentlist[fpcat.name][tpcat].color)
+					.text(txt)
+					.append("svg:title")
+					.text(function(d) { return txt + " of '" + categoryDivs[j].name + "' visits were tracked by " + tpcat; });
+					;
 			}
-			
-			result = percentlist[tpcat][fpcat].count / tptotal * 100;
-			var txt = result.toFixed(1) + "%";
-			txtwidth = getStringWidth(txt);
-			if (txtwidth >= categoryDivs[j].width)
-				txt = '';
-			
-			position = percentlist[tpcat][fpcat].height;
-			d3.select("svg")
-				.append("text")
-				.attr("text-anchor", "middle")
-				.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
-				.attr("y", position + height + 9)
-				.attr("fill", percentlist[tpcat][fpcat].color)
-				.text(txt)
-				;
 		}
+
 	}
 	
 	// add union row percents
-	utot = 0;
-	for (key in unionpercents) {
-		utot += unionpercents[key];
-	}
 	for (key in unionpercents) {
 		var j = 0;
 		for (j=0;j<categoryDivs.length;j++) {
 			if (categoryDivs[j].name == key)
 				break;
 		}
-		
-		result = unionpercents[key]/ utot * 100;
+		result = unionpercents[key] / categoryDivs[j].count * 100;
 		var txt = result.toFixed(1) + "%";
 		txtwidth = getStringWidth(txt);
 		if (txtwidth >= categoryDivs[j].width)
@@ -675,8 +715,10 @@ function loadData() {
 			.attr("text-anchor", "middle")
 			.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 			.attr("y", totalHeight+9)
-			.attr("fill", "#000")
+			.attr("fill", "#555")
 			.text(txt)
+			.append("svg:title")
+			.text(function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers"; });
 			;
 	}
 }
