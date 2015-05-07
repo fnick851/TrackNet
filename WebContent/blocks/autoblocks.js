@@ -45,8 +45,8 @@ function websiteView() {
 	d3.select("#categoryview").attr("class", "");
 	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
-		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
+		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
 		return d3.ascending(a.domain+aTracking,
 							b.domain+bTracking);
 	});
@@ -59,8 +59,8 @@ function categoryView() {
 	d3.select("#categoryview").attr("class", "selected");
 	d3.select("#orderview").attr("class", "");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
-		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
+		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
 		return d3.ascending(a.category+aTracking+a.domain,
 							b.category+bTracking+b.domain);
 	});
@@ -73,8 +73,8 @@ function orderView() {
 	d3.select("#categoryview").attr("class", "");
 	d3.select("#orderview").attr("class", "selected");
 	firstparty = firstparty.sort(function(a,b) {
-		var aTracking = (!isTracked(a.uid))?"C":(hasCookie(a.uid))?"A":"B";
-		var bTracking = (!isTracked(b.uid))?"C":(hasCookie(b.uid))?"A":"B";
+		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
+		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
 		return d3.ascending(aTracking+a.uid,
 							bTracking+b.uid);
 	});
@@ -109,13 +109,13 @@ function runMain() {
 }
 
 
-function isTracked(domainId) {
+function isTracked(d) {
 	// parameter: first-party domain's UID
 	// return: true/false if tracked
 	var thirdparty = td["third_party"];
 	// is there a d3 way to do this?
 	for (i=0;i<thirdparty.length;i++) {
-		if (thirdparty[i]['uid'] == domainId)
+		if (thirdparty[i]['domain'] != d.domain && thirdparty[i]['uid'] == d.uid) // exclude self-tracking
 			return true;
 		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
 		//	return false;
@@ -131,12 +131,12 @@ function getDomain(domainId) {
 	}
 }
 
-function hasCookie(domainId) {
+function hasCookie(d) {
 	// parameter: first-party domain's UID
 	// return: true/false if a third party tracking it has_cookie is true
 	var thirdparty = td["third_party"];
 	for (i=0;i<thirdparty.length;i++) {
-		if (thirdparty[i]['uid'] == domainId && thirdparty[i]['has_cookie'] == 1)
+		if (thirdparty[i]['domain'] != d.domain && thirdparty[i]['uid'] == d.uid && thirdparty[i]['has_cookie'] == 1)
 			return true;
 		//else if (thirdparty[i]['uid'] > domainId) // save on time, since they are ordered by uid
 		//	return false;
@@ -307,7 +307,7 @@ function getFirstPartyCategory(uid) {
 			} else if (curView == 1) {
 				return d.category;
 			} else if (curView == 2) {
-				//trackingLevel = (!isTracked(d.uid))?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+				//trackingLevel = (!isTracked(d))?"Untracked":(hasCookie(d))?"Tracked with Cookie":"Tracked";
 				trackingLevel = "All Sites";
 				return trackingLevel;
 			}
@@ -394,7 +394,7 @@ function loadData() {
 				x += width;
 				xpos[d.uid] = x;
 				
-				dIsTracked = isTracked(d.uid);
+				dIsTracked = isTracked(d);
 				
 				// update category divs
 				if (curView == 0) {
@@ -408,7 +408,7 @@ function loadData() {
 						lastCat = d.category;
 					}
 				} else if (curView == 2) {
-					//trackingLevel = (!dIsTracked)?"Untracked":(hasCookie(d.uid))?"Tracked with Cookie":"Tracked";
+					//trackingLevel = (!dIsTracked)?"Untracked":(hasCookie(d))?"Tracked with Cookie":"Tracked";
 					trackingLevel = "All Sites";
 					if (trackingLevel != lastCat) {
 						categoryDivs.push({'name':trackingLevel, 'pos':x, 'count':0, 'trackedCount':0});
@@ -434,7 +434,7 @@ function loadData() {
 				return "#000";
 			})
 		.attr('opacity', function(d) {
-				return (!isTracked(d.uid))?untrackedColor:(hasCookie(d.uid))?cookieColor:trackedColor;
+				return (!isTracked(d))?untrackedColor:(hasCookie(d))?cookieColor:trackedColor;
 			})
 		//.append("svg:title")
 		.attr("data-tooltip", function(d) {
