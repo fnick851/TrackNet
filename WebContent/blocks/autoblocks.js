@@ -379,7 +379,7 @@ function loadData() {
             })
 		.on("mouseout", function() {
 				var block = d3.select(this);
-				$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+				$(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 
 				block.transition().duration(10).attr('opacity', 1.0);
 			})
@@ -438,7 +438,7 @@ function loadData() {
 			})
 		//.append("svg:title")
 		.attr("data-tooltip", function(d) {
-			                  $(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+			                  $(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 
 				return '<a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + "</a><br />"+'<a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + "</a>";
 			})
@@ -646,7 +646,7 @@ function loadData() {
 		})
 		;
 
-	$(".iframe").colorbox({iframe:true, width:"90%", innerHeight:"560px"});
+	$(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 	
 	// add category percents
 	root.selectAll("g#catPercents").data(categoryDivs).enter()
