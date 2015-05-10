@@ -72,6 +72,9 @@ function orderView() {
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "");
 	d3.select("#orderview").attr("class", "selected");
+	
+	//$("#loading").show();
+	
 	firstparty = firstparty.sort(function(a,b) {
 		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
 		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
@@ -79,6 +82,8 @@ function orderView() {
 							bTracking+b.uid);
 	});
 	loadData();
+	
+	//$("#loading").hide();
 }
 
 function runMain() {
@@ -440,7 +445,7 @@ function loadData() {
 		.attr("data-tooltip", function(d) {
 			                  $(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 
-				return '<a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + "</a><br />"+'<a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + "</a>";
+				return 'website: <a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + " <sup>&#8599;</sup></a><br />"+'category: <a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + " <sup>&#8599;</sup></a>";
 			})
 		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
@@ -474,6 +479,7 @@ function loadData() {
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
 		.append("rect")
+		.attr('class', 'tpblock')
 		.attr('x', function(d) {
 				return xpos[d.uid];
 				//x += width; return x;
@@ -538,9 +544,21 @@ function loadData() {
 					return 0;
 				}
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; })
+		.attr("data-tooltip", function(d) { return d.domain; })
 		;
+		
+	// third-party block tooltips
+	$('.tpblock').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add 'union' row at bottom
 	x = offset;
@@ -549,6 +567,7 @@ function loadData() {
 	unionpercents = {};
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
+		.attr('class', 'ublock')
 		.attr('x', function(d) {
 				return xpos[d.uid];
 			})
@@ -593,8 +612,6 @@ function loadData() {
 				}
 				return 0;
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; })
 		;
 	
 	// draw category divisions
@@ -651,6 +668,7 @@ function loadData() {
 	// add category percents
 	root.selectAll("g#catPercents").data(categoryDivs).enter()
 		.append("text")
+		.attr('class', 'catPercents')
 		.attr("text-anchor", "middle")
 		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', initHeight+padding+9)
@@ -663,9 +681,20 @@ function loadData() {
 			else
 				return '';
 		})
-		.append("svg:title")
-		.text(function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked"; });
+		.attr('data-tooltip', function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked."; });
 		;
+		
+	$('.catPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add third-party percents
 	for (j=0; j<categoryDivs.length; j++) {
@@ -682,18 +711,30 @@ function loadData() {
 				position = percentlist[fpcat.name][tpcat].height;
 				d3.select("svg")
 					.append("text")
+					.attr('class', 'tpPercents')
 					.attr("text-anchor", "middle")
 					.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 					.attr("y", position + height + 9)
 					.attr("fill", percentlist[fpcat.name][tpcat].color)
 					.text(txt)
-					.append("svg:title")
-					.text(function(d) { return txt + " of '" + categoryDivs[j].name + "' visits were tracked by " + tpcat; });
+					.attr('data-tooltip', function(d) { return txt + " of '" + categoryDivs[j].name + "' visits were tracked by " + tpcat; });
 					;
 			}
 		}
 
 	}
+	
+	$('.tpPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add union row percents
 	for (key in unionpercents) {
@@ -710,14 +751,25 @@ function loadData() {
 	
 		d3.select("svg")
 			.append("text")
+			.attr('class', 'uPercents')
 			.attr("text-anchor", "middle")
 			.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 			.attr("y", totalHeight+9)
 			.attr("fill", "#555")
 			.text(txt)
-			.append("svg:title")
-			.text(function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers"; });
+			.attr('data-tooltip', function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers."; });
 			;
+		$('.uPercents').qtip({
+			hide: { delay: 100, fixed: true },
+			content: {
+				text: function(event, api) {
+					return $(this)[0].getAttribute('data-tooltip');
+				}
+			},
+			position: { my: 'top center', at: 'bottom center' },
+			style: { classes: 'qtip-light qtip-rounded customqtip' },
+			tip: true
+		});
 	}
 }
 
