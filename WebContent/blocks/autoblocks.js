@@ -208,13 +208,14 @@ function initializeCategories() {
 		});
 		
 		for (var i = 0; i < tuples.length; i++) {
-			var key = tuples[i][0];
-			var value = tuples[i][1];
+			var displaytext = tuples[i][0] + " | " + tuples[i][1] + " visits";
+			var site = tuples[i][0];
+			var count = tuples[i][1];
 			
 			if (i < 5) { // top N categories display by default
-				active_categories[searchType].push({value:key, data:value, enabled:false});
+				active_categories[searchType].push({value:displaytext, domain:site, data:count, enabled:false});
 			} else {
-				other_categories[searchType].push({value:key, data:value, enabled:false});
+				other_categories[searchType].push({value:displaytext, domain:site, data:count, enabled:false});
 			}
 		}
 	}
@@ -225,17 +226,17 @@ function initializeSearchBox() {
 	// clear div
 	$('#active_categories').empty();
 	if (curSearch == 1)
-		$('#autocomplete').attr("placeholder", "Search for category");
+		$('#autocomplete').attr("placeholder", "Search for tracker type");
 	else
-		$('#autocomplete').attr("placeholder", "Search for website");
+		$('#autocomplete').attr("placeholder", "Search for tracker");
 	
 	var unionTotal = 0;
 	for(var i = 0; i < active_categories[curSearch].length; i++)
 	{
 		var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + active_categories[curSearch][i].value + '</span> <span class="separator">|</span> ' +
-			'<i><span class="item_percent">' + active_categories[curSearch][i].data + '</span></i>' +
+			'<span class="item_name">' + active_categories[curSearch][i].domain + '</span> <span class="separator">|</span> ' +
+			'<i><span class="item_percent">' + active_categories[curSearch][i].data + ' visits</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			'</div>';
@@ -250,7 +251,7 @@ function initializeSearchBox() {
 		'<div class="active_category_item">' +
 		'<button class="delete_item">&nbsp;</button>' +
 		'<span class="item_name">All Selected</span>' + '<span class="separator">|</span> ' +
-		'<i><span class="item_percent">' + unionTotal + '</span></i>' +
+		'<i><span class="item_percent">' + unionTotal + ' visits</span></i>' +
 		'</div>');
 	
 	// setup autocomplete function pulling from categories[] array
@@ -260,7 +261,7 @@ function initializeSearchBox() {
 		onSelect: function (item) {
 			var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
+			'<span class="item_name">' + item.domain + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
@@ -287,7 +288,7 @@ function initializeSearchBox() {
 function getCategoryList(datalist) {
 	cats = [];
 	for (i=0;i<active_categories[curSearch].length;i++){
-		cats.push(active_categories[curSearch][i]["value"]);
+		cats.push(active_categories[curSearch][i]["domain"]);
 	}
 	return cats;
 }
@@ -800,7 +801,7 @@ function moveUp(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().html();
     
 	for (var i = 1; i < active_categories[curSearch].length; i++)  {
-		if (active_categories[curSearch][i].value == item_value)  {
+		if (active_categories[curSearch][i].domain == item_value)  {
 			var item = active_categories[curSearch][i];
 			var prev = active_categories[curSearch][i-1];
 			active_categories[curSearch][i-1] = item;
@@ -820,7 +821,7 @@ function moveDown(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().prev().html();
     
 	for (var i = 0; i < active_categories[curSearch].length-1; i++)  {
-		if (active_categories[curSearch][i].value == item_value)  {
+		if (active_categories[curSearch][i].domain == item_value)  {
 			var item = active_categories[curSearch][i];
 			var next = active_categories[curSearch][i+1];
 			active_categories[curSearch][i+1] = item;
