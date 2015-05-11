@@ -816,6 +816,7 @@ function removeRightPart() {
     svg.selectAll(".catgoryBubble")
        .attr("visibility", null)
        .attr("pointer-events", null);
+    svg.select("#fakeBubble").remove();
     svg.select("#trackersBox").remove();
     svg.select("#p1List").remove();
 }
@@ -890,20 +891,36 @@ function drawGraph() {
                        drawTrackersBox(data);
                        thisBubble.attr("visibility", "hidden")
                                  .attr("pointer-events", "none");
-                       svg.select("#trackersBox")
-                          .append("line")
-                          .attr("class", "link")
-                          .attr("x1", bubbleCenter[0])
-                          .attr("y1", bubbleCenter[1])
-                          .attr("x2", data.x+data.r)
-                          .attr("y2", data.y);
-                       svg.select("#trackersBox line")
-                          .transition()
-                          .attr("x2", data.x-data.r);
+                       fakeBubble = svg.select("#bubbleWheel")
+                                       .append("g")
+                                       .attr("id", "fakeBubble");
+                       fakeBubble.append("circle")
+                                 .attr("class", "bubbleSurface")
+                                 .attr("cx", data.x)
+                                 .attr("cy", data.y)
+                                 .attr("r", data.r)
+                                 .attr("fill", colors(data.index));
+                       fakeBubble.append("circle")
+                                 .attr("class", "bubbleEdge")
+                                 .attr("cx", data.x)
+                                 .attr("cy", data.y)
+                                 .attr("r", data.r)
+                                 .attr("stroke", colors(data.index));
+                       fakeBubble.selectAll("circle")
+                                 .transition()
+                                 .attr("r", 5);
+                       fakeBubble.append("line")
+                                 .attr("class", "link")
+                                 .attr("x1", bubbleCenter[0])
+                                 .attr("y1", bubbleCenter[1])
+                                 .attr("x2", data.x+data.r)
+                                 .attr("y2", data.y)
+                                 .transition()
+                                 .attr("x2", data.x-5);
                        svg.selectAll("#trackersBox path.link")
                           .transition()
                           .attr("d", function(d) {
-                              d.link.source.x = data.x-data.r;
+                              d.link.source.x = data.x+5;
                               return diagonal(d.link);
                           });
                    });
