@@ -73,8 +73,6 @@ function orderView() {
 	d3.select("#categoryview").attr("class", "");
 	d3.select("#orderview").attr("class", "selected");
 	
-	//$("#loading").show();
-	
 	firstparty = firstparty.sort(function(a,b) {
 		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
 		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
@@ -82,8 +80,6 @@ function orderView() {
 							bTracking+b.uid);
 	});
 	loadData();
-	
-	//$("#loading").hide();
 }
 
 function runMain() {
@@ -340,6 +336,7 @@ function getStringWidth(string) {
 }
 
 function loadData() {
+$("#loading").show();
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
@@ -450,7 +447,7 @@ function loadData() {
 			})
 		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
-		
+	
 	// qtip2 tooltips
 	$('g').qtip({
 		hide: {
@@ -473,6 +470,13 @@ function loadData() {
 	});
 	
 	// add individual blocks for third-party
+	notShown = function(d, i) {
+		tpCat = d.domain;
+		if (curSearch == 1)
+			tpCat = d.category;
+		return (categoryList.indexOf(tpCat) > -1);
+	};
+	
 	blocklist = {};
 	unionlist = {};
 	percentlist = {}; // to calculate percent of third-party groups tracking first-party groups
@@ -480,6 +484,7 @@ function loadData() {
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
 		.append("rect")
+		.filter(notShown)
 		.attr('class', 'tpblock')
 		.attr('x', function(d) {
 				return xpos[d.uid];
@@ -547,7 +552,7 @@ function loadData() {
 			})
 		.attr("data-tooltip", function(d) { return d.domain; })
 		;
-		
+	
 	// third-party block tooltips
 	$('.tpblock').qtip({
 		hide: { delay: 100, fixed: true },
@@ -663,7 +668,7 @@ function loadData() {
 				return '';
 		})
 		;
-
+	
 	$(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 	
 	// add category percents
@@ -684,7 +689,7 @@ function loadData() {
 		})
 		.attr('data-tooltip', function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked."; });
 		;
-		
+	
 	$('.catPercents').qtip({
 		hide: { delay: 100, fixed: true },
 		content: {
@@ -722,7 +727,6 @@ function loadData() {
 					;
 			}
 		}
-
 	}
 	
 	$('.tpPercents').qtip({
@@ -759,19 +763,22 @@ function loadData() {
 			.attr("fill", "#555")
 			.text(txt)
 			.attr('data-tooltip', function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers."; });
-			;
-		$('.uPercents').qtip({
-			hide: { delay: 100, fixed: true },
-			content: {
-				text: function(event, api) {
-					return $(this)[0].getAttribute('data-tooltip');
-				}
-			},
-			position: { my: 'top center', at: 'bottom center' },
-			style: { classes: 'qtip-light qtip-rounded customqtip' },
-			tip: true
-		});
+		;
 	}
+
+	$('.uPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
+
+$("#loading").hide();
 }
 
 function remove_active_item(remove_item)
