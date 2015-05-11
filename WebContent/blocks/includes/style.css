@@ -265,6 +265,7 @@ p {
 }
 #tabs li a
 {
+	cursor:pointer;
 	text-align:center;
 	text-decoration:none;
 	padding: 2px;
