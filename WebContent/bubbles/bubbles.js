@@ -670,7 +670,7 @@ function drawP1List(data) {
     if (data.p1Length > 0) {
         p1List.append("text")
               .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
-              .attr("y", p1ListTopLeft[1]+15)
+              .attr("y", p1ListTopLeft[1]+30)
               .attr("fill", "gray")
               .style("text-anchor", "middle")
               .text(function() {
@@ -681,13 +681,13 @@ function drawP1List(data) {
               });
         p1List.append("text")
               .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
-              .attr("y", p1ListTopLeft[1]+35)
+              .attr("y", p1ListTopLeft[1]+47)
               .attr("fill", "gray")
               .style("text-anchor", "middle")
               .text("also tracked by");
         p1List.append("text")
               .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
-              .attr("y", p1ListTopLeft[1]+55)
+              .attr("y", p1ListTopLeft[1]+64)
               .attr("fill", "gray")
               .style("text-anchor", "middle")
               .text(data.domain);
