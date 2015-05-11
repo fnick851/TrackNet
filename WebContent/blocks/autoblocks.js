@@ -72,6 +72,7 @@ function orderView() {
 	d3.select("#webview").attr("class", "");
 	d3.select("#categoryview").attr("class", "");
 	d3.select("#orderview").attr("class", "selected");
+	
 	firstparty = firstparty.sort(function(a,b) {
 		var aTracking = (!isTracked(a))?"C":(hasCookie(a))?"A":"B";
 		var bTracking = (!isTracked(b))?"C":(hasCookie(b))?"A":"B";
@@ -203,13 +204,14 @@ function initializeCategories() {
 		});
 		
 		for (var i = 0; i < tuples.length; i++) {
-			var key = tuples[i][0];
-			var value = tuples[i][1];
+			var displaytext = tuples[i][0] + " | " + tuples[i][1] + " visits";
+			var site = tuples[i][0];
+			var count = tuples[i][1];
 			
 			if (i < 5) { // top N categories display by default
-				active_categories[searchType].push({value:key, data:value, enabled:false});
+				active_categories[searchType].push({value:displaytext, domain:site, data:count, enabled:false});
 			} else {
-				other_categories[searchType].push({value:key, data:value, enabled:false});
+				other_categories[searchType].push({value:displaytext, domain:site, data:count, enabled:false});
 			}
 		}
 	}
@@ -220,17 +222,17 @@ function initializeSearchBox() {
 	// clear div
 	$('#active_categories').empty();
 	if (curSearch == 1)
-		$('#autocomplete').attr("placeholder", "Search for category");
+		$('#autocomplete').attr("placeholder", "Search for tracker type");
 	else
-		$('#autocomplete').attr("placeholder", "Search for website");
+		$('#autocomplete').attr("placeholder", "Search for tracker");
 	
 	var unionTotal = 0;
 	for(var i = 0; i < active_categories[curSearch].length; i++)
 	{
 		var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + active_categories[curSearch][i].value + '</span> <span class="separator">|</span> ' +
-			'<i><span class="item_percent">' + active_categories[curSearch][i].data + '</span></i>' +
+			'<span class="item_name">' + active_categories[curSearch][i].domain + '</span> <span class="separator">|</span> ' +
+			'<i><span class="item_percent">' + active_categories[curSearch][i].data + ' visits</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
 			'</div>';
@@ -245,7 +247,7 @@ function initializeSearchBox() {
 		'<div class="active_category_item">' +
 		'<button class="delete_item">&nbsp;</button>' +
 		'<span class="item_name">All Selected</span>' + '<span class="separator">|</span> ' +
-		'<i><span class="item_percent">' + unionTotal + '</span></i>' +
+		'<i><span class="item_percent">' + unionTotal + ' visits</span></i>' +
 		'</div>');
 	
 	// setup autocomplete function pulling from categories[] array
@@ -255,7 +257,7 @@ function initializeSearchBox() {
 		onSelect: function (item) {
 			var html = '<div class="active_category_item">' +
 			'<button class="delete_item" onclick="remove_active_item(this);">&times;</button>' +
-			'<span class="item_name">' + item.value + '</span> <span class="separator">|</span> ' +
+			'<span class="item_name">' + item.domain + '</span> <span class="separator">|</span> ' +
 			'<i><span class="item_percent">' + item.data + '</span></i>' +
 			'<button class="move_up" onclick="moveUp(this);">&uparrow;</button>' +
 			'<button class="move_down" onclick="moveDown(this);">&downarrow;</button>' +
@@ -282,7 +284,7 @@ function initializeSearchBox() {
 function getCategoryList(datalist) {
 	cats = [];
 	for (i=0;i<active_categories[curSearch].length;i++){
-		cats.push(active_categories[curSearch][i]["value"]);
+		cats.push(active_categories[curSearch][i]["domain"]);
 	}
 	return cats;
 }
@@ -334,6 +336,7 @@ function getStringWidth(string) {
 }
 
 function loadData() {
+$("#loading").show();
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
@@ -440,11 +443,11 @@ function loadData() {
 		.attr("data-tooltip", function(d) {
 			                  $(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 
-				return '<a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + "</a><br />"+'<a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + "</a>";
+				return 'website: <a class="iframe" '+ "href='../bubbles/popup.html?domain=" + id_list["domainDict"][d.domain] +"'>" + d.domain + " <sup>&#8599;</sup></a><br />"+'category: <a class="iframe" '+ "href='../bubbles/popup.html?category=" + id_list["catDict"][d.category] + "'>" + d.category + " <sup>&#8599;</sup></a>";
 			})
 		//.text(function(d) { return d.domain + "\n" + d.category; })
 		;
-		
+	
 	// qtip2 tooltips
 	$('g').qtip({
 		hide: {
@@ -467,6 +470,13 @@ function loadData() {
 	});
 	
 	// add individual blocks for third-party
+	notShown = function(d, i) {
+		tpCat = d.domain;
+		if (curSearch == 1)
+			tpCat = d.category;
+		return (categoryList.indexOf(tpCat) > -1);
+	};
+	
 	blocklist = {};
 	unionlist = {};
 	percentlist = {}; // to calculate percent of third-party groups tracking first-party groups
@@ -474,6 +484,8 @@ function loadData() {
 	y = height+width;
 	root.selectAll("g#tp").data(thirdparty).enter()
 		.append("rect")
+		.filter(notShown)
+		.attr('class', 'tpblock')
 		.attr('x', function(d) {
 				return xpos[d.uid];
 				//x += width; return x;
@@ -538,9 +550,21 @@ function loadData() {
 					return 0;
 				}
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; })
+		.attr("data-tooltip", function(d) { return d.domain; })
 		;
+	
+	// third-party block tooltips
+	$('.tpblock').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add 'union' row at bottom
 	x = offset;
@@ -549,6 +573,7 @@ function loadData() {
 	unionpercents = {};
 	root.selectAll("g#union").data(thirdparty).enter()
 		.append("rect")
+		.attr('class', 'ublock')
 		.attr('x', function(d) {
 				return xpos[d.uid];
 			})
@@ -593,8 +618,6 @@ function loadData() {
 				}
 				return 0;
 			})
-		.append("svg:title")
-		.text(function(d) { return d.domain; })
 		;
 	
 	// draw category divisions
@@ -645,12 +668,13 @@ function loadData() {
 				return '';
 		})
 		;
-
+	
 	$(".iframe").colorbox({iframe:true, top:0, width:"90%", innerHeight:"560px"});
 	
 	// add category percents
 	root.selectAll("g#catPercents").data(categoryDivs).enter()
 		.append("text")
+		.attr('class', 'catPercents')
 		.attr("text-anchor", "middle")
 		.attr('x', function(d) { return d.pos + d.width/2; })
 		.attr('y', initHeight+padding+9)
@@ -663,9 +687,20 @@ function loadData() {
 			else
 				return '';
 		})
-		.append("svg:title")
-		.text(function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked"; });
+		.attr('data-tooltip', function(d) { return (d.trackedCount / d.count * 100).toFixed(1) + "% of '" + d.name + "' visits were tracked."; });
 		;
+	
+	$('.catPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add third-party percents
 	for (j=0; j<categoryDivs.length; j++) {
@@ -682,18 +717,29 @@ function loadData() {
 				position = percentlist[fpcat.name][tpcat].height;
 				d3.select("svg")
 					.append("text")
+					.attr('class', 'tpPercents')
 					.attr("text-anchor", "middle")
 					.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 					.attr("y", position + height + 9)
 					.attr("fill", percentlist[fpcat.name][tpcat].color)
 					.text(txt)
-					.append("svg:title")
-					.text(function(d) { return txt + " of '" + categoryDivs[j].name + "' visits were tracked by " + tpcat; });
+					.attr('data-tooltip', function(d) { return txt + " of '" + categoryDivs[j].name + "' visits were tracked by " + tpcat; });
 					;
 			}
 		}
-
 	}
+	
+	$('.tpPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
 	
 	// add union row percents
 	for (key in unionpercents) {
@@ -710,15 +756,29 @@ function loadData() {
 	
 		d3.select("svg")
 			.append("text")
+			.attr('class', 'uPercents')
 			.attr("text-anchor", "middle")
 			.attr("x", categoryDivs[j].pos + categoryDivs[j].width/2)
 			.attr("y", totalHeight+9)
 			.attr("fill", "#555")
 			.text(txt)
-			.append("svg:title")
-			.text(function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers"; });
-			;
+			.attr('data-tooltip', function(d) { return txt + " of visits to '" + categoryDivs[j].name + "' were tracked by currently selected trackers."; });
+		;
 	}
+
+	$('.uPercents').qtip({
+		hide: { delay: 100, fixed: true },
+		content: {
+			text: function(event, api) {
+				return $(this)[0].getAttribute('data-tooltip');
+			}
+		},
+		position: { my: 'top center', at: 'bottom center' },
+		style: { classes: 'qtip-light qtip-rounded customqtip' },
+		tip: true
+	});
+
+$("#loading").hide();
 }
 
 function remove_active_item(remove_item)
@@ -748,7 +808,7 @@ function moveUp(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().html();
     
 	for (var i = 1; i < active_categories[curSearch].length; i++)  {
-		if (active_categories[curSearch][i].value == item_value)  {
+		if (active_categories[curSearch][i].domain == item_value)  {
 			var item = active_categories[curSearch][i];
 			var prev = active_categories[curSearch][i-1];
 			active_categories[curSearch][i-1] = item;
@@ -768,7 +828,7 @@ function moveDown(moveItem) {
     var item_value = $(moveItem).prev().prev().prev().prev().html();
     
 	for (var i = 0; i < active_categories[curSearch].length-1; i++)  {
-		if (active_categories[curSearch][i].value == item_value)  {
+		if (active_categories[curSearch][i].domain == item_value)  {
 			var item = active_categories[curSearch][i];
 			var next = active_categories[curSearch][i+1];
 			active_categories[curSearch][i+1] = item;

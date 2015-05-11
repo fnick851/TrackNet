@@ -265,6 +265,7 @@ p {
 }
 #tabs li a
 {
+	cursor:pointer;
 	text-align:center;
 	text-decoration:none;
 	padding: 2px;
@@ -300,8 +301,27 @@ p {
 
 .customqtip  .qtip-content {
 	text-align:center;
+	max-width:200px;
 }
 .customqtip  .qtip-content a {
 	text-decoration:none;
 	line-height:1.5em;
+}
+
+div#loading {
+	opacity:0.8;
+	background-color:#fff;
+	position:absolute;
+	top:0px;
+	left:0px;
+	height:100%;
+	width:100%;
+	background-image: url("images/loading_128.gif");
+	background-repeat:no-repeat;
+	background-position-x:50%;
+	background-position-y:50px;
+}
+
+svg text {
+	cursor:default;
 }

@@ -667,18 +667,31 @@ function drawP1List(data) {
     var p1List = svg.select("#canvas")
                     .append("g")
                     .attr("id", "p1List");
-    p1List.append("text")
-          .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
-          .attr("y", p1ListTopLeft[1]+30)
-          .attr("fill", "gray")
-          .style("text-anchor", "middle")
-          .text((viewType == "domain" ? "Websites" : "Categories") + " tracked by");
-    p1List.append("text")
-          .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
-          .attr("y", p1ListTopLeft[1]+55)
-          .attr("fill", "gray")
-          .style("text-anchor", "middle")
-          .text(data.domain);
+    if (data.p1Length > 0) {
+        p1List.append("text")
+              .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
+              .attr("y", p1ListTopLeft[1]+30)
+              .attr("fill", "gray")
+              .style("text-anchor", "middle")
+              .text(function() {
+                  if (data.p1Length == 1 )
+                      return "Another " + (viewType == "domain" ? "website" : "category");
+                  else
+                      return data.p1Length + " other " + (viewType == "domain" ? "websites" : "categories");
+              });
+        p1List.append("text")
+              .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
+              .attr("y", p1ListTopLeft[1]+47)
+              .attr("fill", "gray")
+              .style("text-anchor", "middle")
+              .text("also tracked by");
+        p1List.append("text")
+              .attr("x", p1ListLeft+p1ListItemDimentions[0]/2)
+              .attr("y", p1ListTopLeft[1]+64)
+              .attr("fill", "gray")
+              .style("text-anchor", "middle")
+              .text(data.domain);
+    }
     
     var source = showingTreemap
                  ? {"x":trackerItemTopLeft[0]+data.x+data.dx,
