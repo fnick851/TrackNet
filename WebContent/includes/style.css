@@ -122,13 +122,13 @@ p {
 
 #active_categories
 {
-    width: 250px;
+    width: 300px;
     margin: 2px 12.5px;
 }
 
 .active_category_item
 {
-    width: 250px;
+    width: 300px;
     padding: 2px;
     margin: 3px;
     background-color: #eee;
@@ -216,13 +216,12 @@ p {
 
 #chartholder, #tabs #firstparty
 {
-  margin-left:300px;
+  margin-left:330px;
 }
 #chart
 {
   overflow-x:scroll;
   width:80%;
-  padding-bottom:10px;
 }
 
 #chartholder .tooltip
@@ -245,7 +244,7 @@ p {
 }
 
 .tooltip a {
-  
+  text-decoration:none;
   z-index: 999;
 }
 
@@ -259,13 +258,14 @@ p {
   padding: 2px;
   margin: 0;
   list-style-type:none;
-  width:200px;
+  width:300px;
 }
 #tabs li {
   display:inline;
 }
 #tabs li a
 {
+	cursor:pointer;
   text-align:center;
   text-decoration:none;
   padding: 2px;
@@ -299,6 +299,15 @@ p {
     margin-left:5px;
 }
 
+.customqtip  .qtip-content {
+	text-align:center;
+	max-width:200px;
+}
+.customqtip  .qtip-content a {
+	text-decoration:none;
+	line-height:1.5em;
+}
+
 header
 {
   width: 100%;
@@ -321,4 +330,22 @@ embed
 {
   width: 100%;
   height: 1000px;
+}
+
+div#loading {
+	opacity:0.8;
+	background-color:#fff;
+	position:absolute;
+	top:0px;
+	left:0px;
+	height:100%;
+	width:100%;
+	background-image: url("images/loading_128.gif");
+	background-repeat:no-repeat;
+	background-position-x:50%;
+	background-position-y:50px;
+}
+
+svg text {
+	cursor:default;
 }
