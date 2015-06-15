@@ -287,7 +287,8 @@ function shrinkTransition(token, data) {
 					 content: {
 						 title: 'Instruction: Bubbles',
 		                 text: '<ul>\
-		                    	    <li>To be continue...</li>\
+		                    	    <li>When an active bubble is clicked, the tooltip\
+		                	            will be pinned and become interactive.</li>\
 		                    	    <br>==> Click on this blue bubble.​\
 		                    	</ul>'
 		             },
@@ -983,6 +984,32 @@ function drawGraph() {
                               d.link.source.x = data.x+5;
                               return diagonal(d.link);
                           });
+                       if (intro_step == 4) {
+                    	   tooltip.qtip('destroy');
+        				   intro_step = 5;
+        				   tooltip = $("#trackersBox").qtip({
+        					   content: {
+        						   title: 'Instruction: Trackers\' Box',
+        		                   text: '<ul>\
+        		                    	      <li>You can hover on a tracker to see other websites also\
+        		                	              tracked by it (the numbers indicate how many).</li>\
+        		                    	      <br>==> To be continued...\
+        		                    	  </ul>'
+        		               },
+        		               position: {
+        		                   my: 'left center',
+        		                   at: 'right center'
+        		               },
+        		               style: {
+        		            	   classes: 'tooltip'
+        		               },
+        		               show: {
+        		                   when: false, // Don't specify a show event
+        		                   ready: true // Show the tooltip when ready
+        		               },
+        		               hide: false // Don't specify a hide event
+        		           });
+        			   }
                    });
                    d3.select("#closeButton").remove();
                    d3.select("#categoryTooltip").remove();
