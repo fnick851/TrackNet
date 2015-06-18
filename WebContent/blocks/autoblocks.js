@@ -27,7 +27,8 @@ function websiteSearch() {
 	d3.select("#categorysearch").attr("class", "");
 	
 	initializeSearchBox();
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function categorySearch() {
@@ -36,7 +37,8 @@ function categorySearch() {
 	d3.select("#websearch").attr("class", "");
 	
 	initializeSearchBox();
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function websiteView() {
@@ -50,7 +52,8 @@ function websiteView() {
 		return d3.ascending(a.domain+aTracking,
 							b.domain+bTracking);
 	});
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function categoryView() {
@@ -64,7 +67,8 @@ function categoryView() {
 		return d3.ascending(a.category+aTracking+a.domain,
 							b.category+bTracking+b.domain);
 	});
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function orderView() {
@@ -79,7 +83,8 @@ function orderView() {
 		return d3.ascending(aTracking+a.uid,
 							bTracking+b.uid);
 	});
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function runMain() {
@@ -276,7 +281,8 @@ function initializeSearchBox() {
 			
 			// update
 			initializeSearchBox();
-			loadData();
+			$("#loading").show();
+			setTimeout(function(){loadData();}, 0);
 		}
     });
 }
@@ -336,7 +342,6 @@ function getStringWidth(string) {
 }
 
 function loadData() {
-$("#loading").show();
 	categoryList = getCategoryList(firstparty);
 	
 	d3.select("#chart").select("svg").remove();
@@ -801,7 +806,8 @@ function remove_active_item(remove_item)
 	
 	// update
 	initializeSearchBox();
-	loadData();
+	$("#loading").show();
+	setTimeout(function(){loadData();}, 0);
 }
 
 function moveUp(moveItem) {
@@ -818,7 +824,8 @@ function moveUp(moveItem) {
 			itemDiv.prev().before(itemDiv);
 			
 			initializeSearchBox();
-			loadData();
+			$("#loading").show();
+			setTimeout(function(){loadData();}, 0);
 			return;
         }
     }
@@ -838,7 +845,8 @@ function moveDown(moveItem) {
 			itemDiv.next().after(itemDiv);
 			
 			initializeSearchBox();
-			loadData();
+			$("#loading").show();
+			setTimeout(function(){loadData();}, 0);
 			return;
         }
     }
